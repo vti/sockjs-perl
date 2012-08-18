@@ -7,8 +7,8 @@ our $VERSION = '0.01';
 
 use overload '&{}' => sub { shift->to_app(@_) }, fallback => 1;
 
-use JSON        ();
-use Digest::MD5 ();
+use JSON         ();
+use Digest::MD5  ();
 use Scalar::Util ();
 
 use SockJS::Transport;
@@ -56,7 +56,7 @@ sub call {
         return $self->_dispatch_iframe($env);
     }
 
-    return [404, [], ['Not found']];
+    return [404, ['Content-Length' => 9], ['Not found']];
 }
 
 sub _dispatch_welcome_page {
@@ -64,7 +64,10 @@ sub _dispatch_welcome_page {
     my ($env) = @_;
 
     return [
-        200, ['Content-Type' => 'text/plain; charset=UTF-8'],
+        200,
+        [   'Content-Type'   => 'text/plain; charset=UTF-8',
+            'Content-Length' => '19'
+        ],
         ["Welcome to SockJS!\n"]
     ];
 }
@@ -92,13 +95,23 @@ sub _dispatch_transport {
             sub {
                 my $session = shift;
 
-                delete $self->{sessions}->{$id};
+                #        delete $self->{sessions}->{$id};
             }
         );
     }
 
     my $transport = SockJS::Transport->build($path);
-    return [404, [], ['Not found']] unless $transport;
+    return [
+        404, ['Content-Type' => 'text/plain', 'Content-Length' => 9],
+        ['Not found']
+      ]
+      unless $transport;
+
+    if ($session->is_closed) {
+        my $message = $session->close_message;
+        $message = 'c[' . $message->[0] . ',"' . $message->[1] . '"]' . "\n";
+        return [200, ['Content-Length' => length $message], [$message]];
+    }
 
     my $response;
     eval { $response = $transport->dispatch($env, $session, $path) } || do {

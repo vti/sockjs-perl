@@ -11,6 +11,7 @@ SockJS-perl - a SockJS Perl Plack/PSGI implementation
 Work's still in progress.
 
     WebSocket (hixie-75, hixie-76/hybi-00, hybi-10, hybi-17 and various tweaks)
+    XHR Polling/Streaming
 
 =head2 The Client-Side Part
 

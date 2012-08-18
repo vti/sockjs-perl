@@ -90,7 +90,7 @@ sub write {
     my ($chunk, $cb) = @_;
 
     my $handle = $self->{handle};
-    return $self unless $handle && $handle->fh;
+    die 'Handle is closed' unless $handle;
 
     $handle->push_write($chunk);
 
@@ -113,7 +113,7 @@ sub close {
     my $self = shift;
 
     my $handle = delete $self->{handle};
-    return $self unless $handle;
+    die 'Handle is already closed' unless $handle;
 
     $handle->wtimeout(0);
 
