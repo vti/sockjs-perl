@@ -6,6 +6,7 @@ use warnings;
 use SockJS::Transport::XHR;
 use SockJS::Transport::WebSocket;
 use SockJS::Transport::EventSource;
+use SockJS::Transport::HtmlFile;
 
 sub build {
     my $self = shift;
@@ -19,6 +20,9 @@ sub build {
     }
     elsif ($path eq 'eventsource') {
         return SockJS::Transport::EventSource->new;
+    }
+    elsif ($path eq 'htmlfile') {
+        return SockJS::Transport::HtmlFile->new;
     }
 
     return;
