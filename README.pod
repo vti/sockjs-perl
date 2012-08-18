@@ -6,6 +6,12 @@ SockJS-perl - a SockJS Perl Plack/PSGI implementation
 
 =head1 DESCRIPTION
 
+=head2 Supported transports
+
+Work's still in progress.
+
+    WebSocket (hixie-75, hixie-76/hybi-00, hybi-10, hybi-17 and various tweaks)
+
 =head2 The Client-Side Part
 
 SockJS client is required. You can get it from
