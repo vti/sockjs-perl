@@ -32,35 +32,26 @@ sub dispatch {
         );
 
         $session->on(
-            write => sub {
+            syswrite => sub {
                 my $session = shift;
-
-                my $message = 'a' . JSON::encode_json([@_]);
+                my ($message) = @_;
 
                 $limit -= length($message) - 1;
 
                 $writer->write("data: $message\x0d\x0a\x0d\x0a");
 
                 if ($limit <= 0) {
-                    $session->on(write => undef);
-                    $session->reconnecting;
-
                     $writer->close;
+
+                    $session->reconnecting;
                 }
             }
         );
 
-        $session->on(
-            close => sub {
-                my $session = shift;
-                my ($code, $message) = @_;
-
-                $writer->close;
-            }
-        );
+        $session->on(close => sub { $writer->close });
 
         $writer->write("\x0d\x0a");
-        $writer->write("data: o\x0d\x0a\x0d\x0a");
+        $session->syswrite('o');
 
         if ($session->is_connected) {
             $session->reconnected;

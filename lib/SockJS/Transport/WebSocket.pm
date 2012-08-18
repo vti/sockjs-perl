@@ -112,41 +112,25 @@ sub _handshake_written_cb {
 
         $session->on(
             close => sub {
-                my $conn = shift;
-                my ($code, $message) = @_;
 
-                $code = int $code;
-
-                my $bytes =
-                  $hs->build_frame(buffer => qq{c[$code,"$message"]})
-                  ->to_bytes;
-
-                $handle->write(
-                    $bytes,
-                    sub {
-                        # $handle->write(); TODO write WebSocket EOF
-                        $handle->close;
-                    }
-                );
+                # $handle->write(); TODO write WebSocket EOF
+                $handle->close;
             }
         );
 
         $session->on(
-            write => sub {
+            syswrite => sub {
                 my $session = shift;
+                my ($message) = @_;
 
-                my $buffer = 'a' . JSON::encode_json([@_]);
-
-                my $bytes = $hs->build_frame(buffer => $buffer)->to_bytes;
+                my $bytes = $hs->build_frame(buffer => $message)->to_bytes;
 
                 $handle->write($bytes);
             }
         );
 
-        my $bytes = $hs->build_frame(buffer => 'o')->to_bytes;
-        $handle->write($bytes);
-
-        $session->event('connected');
+        $session->syswrite('o');
+        $session->connected;
     };
 }
 

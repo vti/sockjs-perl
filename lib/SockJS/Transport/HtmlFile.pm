@@ -42,20 +42,18 @@ sub dispatch {
         );
 
         $session->on(
-            write => sub {
+            syswrite => sub {
                 my $session = shift;
-
-                my $message = 'a' . JSON::encode_json([@_]);
+                my ($message) = @_;
 
                 $limit -= length($message) - 1;
 
                 $writer->write($self->_wrap_message($message));
 
                 if ($limit <= 0) {
-                    $session->on(write => undef);
-                    $session->reconnecting;
-
                     $writer->close;
+
+                    $session->reconnecting;
                 }
             }
         );
@@ -84,7 +82,7 @@ sub dispatch {
   </script>
 EOF
 
-        $writer->write($self->_wrap_message('o'));
+        $session->syswrite('o');
 
         if ($session->is_connected) {
             $session->reconnected;

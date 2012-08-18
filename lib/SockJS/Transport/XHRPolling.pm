@@ -53,23 +53,11 @@ sub dispatch {
         my $respond = shift;
 
         $session->on(
-            write => sub {
+            syswrite => sub {
                 my $session = shift;
-
-                my $message = 'a' . JSON::encode_json([@_]);
+                my ($message) = @_;
 
                 $self->_write($env, $session, $respond, $message);
-            }
-        );
-
-        $session->on(
-            close => sub {
-                my $session = shift;
-                my ($code, $message) = @_;
-
-                $code = int $code;
-
-                $session->write(qq{c[$code,"$message"]});
             }
         );
 
@@ -77,8 +65,7 @@ sub dispatch {
             $session->reconnected;
         }
         else {
-            $self->_write($env, $session, $respond, 'o');
-
+            $session->syswrite('o');
             $session->connected;
         }
     };
@@ -89,8 +76,6 @@ sub _write {
     my ($env, $session, $respond, $message) = @_;
 
     $message .= "\n";
-
-    $session->on(write => undef);
 
     my @headers;
     if (my $headers = $env->{HTTP_ACCESS_CONTROL_REQUEST_HEADERS}) {

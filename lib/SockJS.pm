@@ -106,12 +106,6 @@ sub _dispatch_transport {
       ]
       unless $transport;
 
-    if ($session->is_closed) {
-        my $message = $session->close_message;
-        $message = 'c[' . $message->[0] . ',"' . $message->[1] . '"]' . "\n";
-        return [200, ['Content-Length' => length $message], [$message]];
-    }
-
     my $response;
     eval { $response = $transport->dispatch($env, $session, $path) } || do {
         my $e = $@;

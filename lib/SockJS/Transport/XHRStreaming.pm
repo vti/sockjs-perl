@@ -3,8 +3,6 @@ package SockJS::Transport::XHRStreaming;
 use strict;
 use warnings;
 
-use SockJS::Exception;
-
 sub new {
     my $class = shift;
 
@@ -69,10 +67,9 @@ sub dispatch {
         );
 
         $session->on(
-            write => sub {
+            syswrite => sub {
                 my $session = shift;
-
-                my $message = 'a' . JSON::encode_json([@_]);
+                my ($message) = @_;
 
                 $writer->write(
                     $self->_build_chunk($chunked, $message . "\n"));
@@ -80,11 +77,10 @@ sub dispatch {
                 $limit -= length($message) - 1;
 
                 if ($limit <= 0) {
-                    $session->on(write => undef);
-                    $session->reconnecting;
-
                     $writer->write($self->_build_chunk($chunked, ''));
                     $writer->close;
+
+                    $session->reconnecting;
                 }
             }
         );
@@ -92,23 +88,17 @@ sub dispatch {
         $session->on(
             close => sub {
                 my $session = shift;
-                my ($code, $message) = @_;
 
-                $code = int $code;
-
-                $writer->write(
-                    $self->_build_chunk(
-                        $chunked, qq{c[$code,"$message"]} . "\n"
-                    )
-                );
                 $writer->write($self->_build_chunk($chunked, ''));
                 $writer->close;
+
+                $session->reconnecting;
             }
         );
 
         $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
         $limit -= 4;
-        $writer->write($self->_build_chunk($chunked, 'o' . "\n"));
+        $session->syswrite('o');
 
         if ($session->is_connected) {
             $session->reconnected;
