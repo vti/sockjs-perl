@@ -47,7 +47,6 @@ sub call {
         my ($session_id, $transport) = ($1, $2);
 
         return $self->_dispatch_transport($env, $session_id, $transport);
-
     }
     elsif ($path_info eq '/info') {
         return $self->_dispatch_info($env);
@@ -148,6 +147,7 @@ sub _dispatch_info {
         return [
             204,
             [   'Expires'                      => '31536000',
+                'Content-Length'               => 0,
                 'Cache-Control'                => 'public;max-age=31536000',
                 'Access-Control-Allow-Methods' => 'OPTIONS, GET',
                 'Access-Control-Max-Age'       => '31536000',
@@ -157,23 +157,25 @@ sub _dispatch_info {
         ];
     }
 
+    my $info = JSON::encode_json(
+        {     websocket => $self->{websocket} ? JSON::true
+            : JSON::false,
+            cookie_needed => $self->{cookie} ? JSON::true
+            : JSON::false,
+            origins => ['*:*'],
+            entropy => int(rand(2**32))
+        }
+    );
+
     return [
         200,
-        [   'Content-Type' => 'application/json; charset=UTF-8',
+        [   'Content-Type'   => 'application/json; charset=UTF-8',
+            'Content-Length' => length($info),
             'Cache-Control' =>
               'no-store, no-cache, must-revalidate, max-age=0',
             @cors_headers
         ],
-        [   JSON::encode_json(
-                {     websocket => $self->{websocket} ? JSON::true
-                    : JSON::false,
-                    cookie_needed => $self->{cookie} ? JSON::true
-                    : JSON::false,
-                    origins => ['*:*'],
-                    entropy => int(rand(2**32))
-                }
-            )
-        ]
+        [$info]
     ];
 }
 
@@ -211,10 +213,11 @@ EOF
 
     return [
         200,
-        [   'Content-Type'  => 'text/html; charset=UTF-8',
-            'Expires'       => '31536000',
-            'Cache-Control' => 'public;max-age=31536000',
-            'Etag'          => Digest::MD5::md5_hex($body)
+        [   'Content-Type'   => 'text/html; charset=UTF-8',
+            'Content-Length' => length($body),
+            'Expires'        => '31536000',
+            'Cache-Control'  => 'public;max-age=31536000',
+            'Etag'           => Digest::MD5::md5_hex($body)
         ],
         [$body]
     ];
