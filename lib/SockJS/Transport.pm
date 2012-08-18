@@ -9,6 +9,8 @@ use SockJS::Transport::WebSocket;
 use SockJS::Transport::XHRPolling;
 use SockJS::Transport::XHRSend;
 use SockJS::Transport::XHRStreaming;
+use SockJS::Transport::JSONPPolling;
+use SockJS::Transport::JSONPSend;
 
 sub build {
     my $self = shift;
@@ -22,6 +24,12 @@ sub build {
     }
     elsif ($path eq 'xhr_streaming') {
         return SockJS::Transport::XHRStreaming->new;
+    }
+    if ($path eq 'jsonp') {
+        return SockJS::Transport::JSONPPolling->new;
+    }
+    elsif ($path eq 'jsonp_send') {
+        return SockJS::Transport::JSONPSend->new;
     }
     elsif ($path eq 'websocket') {
         return SockJS::Transport::WebSocket->new;
