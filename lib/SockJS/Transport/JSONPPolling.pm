@@ -5,7 +5,15 @@ use warnings;
 
 use base 'SockJS::Transport::Base';
 
-sub dispatch {
+sub new {
+    my $self = shift->SUPER::new(@_);
+
+    push @{$self->{allowed_methods}}, 'GET';
+
+    return $self;
+}
+
+sub dispatch_GET {
     my $self = shift;
     my ($env, $session, $path) = @_;
 

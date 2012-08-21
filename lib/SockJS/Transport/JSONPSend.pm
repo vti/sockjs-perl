@@ -5,34 +5,19 @@ use warnings;
 
 use base 'SockJS::Transport::Base';
 
-sub dispatch {
+sub new {
+    my $self = shift->SUPER::new(@_);
+
+    push @{$self->{allowed_methods}}, 'POST';
+
+    return $self;
+}
+
+sub dispatch_POST {
     my $self = shift;
     my ($env, $session, $path) = @_;
 
-    if ($env->{REQUEST_METHOD} eq 'OPTIONS') {
-        my $origin       = $env->{HTTP_ORIGIN};
-        my @cors_headers = (
-            'Access-Control-Allow-Origin' => !$origin
-              || $origin eq 'null' ? '*' : $origin,
-            'Access-Control-Allow-Credentials' => 'true'
-        );
-
-        return [
-            204,
-            [   'Expires'                      => '31536000',
-                'Cache-Control'                => 'public;max-age=31536000',
-                'Access-Control-Allow-Methods' => 'OPTIONS, POST',
-                'Access-Control-Max-Age'       => '31536000',
-                @cors_headers
-            ],
-            ['']
-        ];
-    }
-
-    return [400, [], ['Bad request']] unless $env->{REQUEST_METHOD} eq 'POST';
-
-    return [404, [], ['Not found']]
-      unless $session->is_connected;
+    return [404, [], ['Not found']] unless $session->is_connected;
 
     my $data = $self->_get_content($env);
 

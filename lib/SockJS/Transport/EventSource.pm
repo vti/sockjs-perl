@@ -10,10 +10,12 @@ sub new {
 
     $self->{response_limit} ||= 128 * 1024;
 
+    push @{$self->{allowed_methods}}, 'GET';
+
     return $self;
 }
 
-sub dispatch {
+sub dispatch_GET {
     my $self = shift;
     my ($env, $session, $path) = @_;
 

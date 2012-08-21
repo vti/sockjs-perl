@@ -10,11 +10,26 @@ use Protocol::WebSocket::Handshake::Server;
 use SockJS::Handle;
 use SockJS::Exception;
 
+sub new {
+    my $self = shift->SUPER::new(@_);
+
+    push @{$self->{allowed_methods}}, 'GET';
+
+    return $self;
+}
+
 sub dispatch {
     my $self = shift;
     my ($env, $session) = @_;
 
     return [405, ['Allow' => 'GET'], []] unless $env->{REQUEST_METHOD} eq 'GET';
+
+    return $self->dispatch_GET(@_);
+}
+
+sub dispatch_GET {
+    my $self = shift;
+    my ($env, $session) = @_;
 
     my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
 
