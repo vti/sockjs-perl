@@ -9,6 +9,8 @@ sub new {
     my $self = {@_};
     bless $self, $class;
 
+    $self->{response_limit} ||= 128 * 1024;
+
     return $self;
 }
 
@@ -16,7 +18,7 @@ sub dispatch {
     my $self = shift;
     my ($env, $session, $path) = @_;
 
-    my $limit = 4096;
+    my $limit = $self->{response_limit};
 
     return sub {
         my $respond = shift;
@@ -30,6 +32,13 @@ sub dispatch {
                 ]
             ]
         );
+
+        if ($session->is_connected && !$session->is_reconnecting) {
+            $writer->write("\x0d\x0a");
+            $writer->write(qq{data: c[2010,"Another connection still open"]\x0d\x0a\x0d\x0a\n"});
+            $writer->close;
+            return;
+        }
 
         $session->on(
             syswrite => sub {
@@ -53,11 +62,16 @@ sub dispatch {
         $writer->write("\x0d\x0a");
         $session->syswrite('o');
 
-        if ($session->is_connected) {
-            $session->reconnected;
+        if ($session->is_closed) {
+            $session->close;
         }
         else {
-            $session->connected;
+            if ($session->is_connected) {
+                $session->reconnected;
+            }
+            else {
+                $session->connected;
+            }
         }
     };
 }

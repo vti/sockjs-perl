@@ -9,6 +9,8 @@ sub new {
     my $self = {@_};
     bless $self, $class;
 
+    $self->{response_limit} ||= 128 * 1024;
+
     return $self;
 }
 
@@ -26,7 +28,7 @@ sub dispatch {
         return [500, ['Content-Length' => 28], ['invalid "callback" parameter']];
     }
 
-    my $limit = 4096;
+    my $limit = $self->{response_limit};
 
     return sub {
         my $respond = shift;
@@ -40,6 +42,13 @@ sub dispatch {
                 ]
             ]
         );
+
+        if ($session->is_connected && !$session->is_reconnecting) {
+            my $message = $self->_wrap_message(
+                'c[2010,"Another connection still open"]' . "\n");
+            $writer->close;
+            return;
+        }
 
         $session->on(
             syswrite => sub {
@@ -81,10 +90,15 @@ sub dispatch {
     window.onload = function() {c.stop();};
   </script>
 EOF
+        $writer->write(' ' x 1024);
 
         $session->syswrite('o');
 
-        if ($session->is_connected) {
+        if ($session->is_closed) {
+            $session->connected;
+            $session->close;
+        }
+        elsif ($session->is_connected) {
             $session->reconnected;
         }
         else {
@@ -97,7 +111,7 @@ sub _wrap_message {
     my $self = shift;
     my ($message) = @_;
 
-    $message =~ s{"}{\\"}smg;
+    $message =~ s/(['""\\\/\n\r\t]{1})/\\$1/smg;
     return qq{<script>\np("$message");\n</script>\r\n};
 }
 

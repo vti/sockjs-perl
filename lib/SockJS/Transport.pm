@@ -14,34 +14,40 @@ use SockJS::Transport::JSONPSend;
 
 sub build {
     my $self = shift;
-    my ($path) = @_;
+    my $path = shift;
+
+    my $class;
 
     if ($path eq 'xhr') {
-        return SockJS::Transport::XHRPolling->new;
+        $class = 'XHRPolling';
     }
     elsif ($path eq 'xhr_send') {
-        return SockJS::Transport::XHRSend->new;
+        $class = 'XHRSend';
     }
     elsif ($path eq 'xhr_streaming') {
-        return SockJS::Transport::XHRStreaming->new;
+        $class = 'XHRStreaming';
     }
     if ($path eq 'jsonp') {
-        return SockJS::Transport::JSONPPolling->new;
+        $class = 'JSONPPolling';
     }
     elsif ($path eq 'jsonp_send') {
-        return SockJS::Transport::JSONPSend->new;
+        $class = 'JSONPSend';
     }
     elsif ($path eq 'websocket') {
-        return SockJS::Transport::WebSocket->new;
+        $class = 'WebSocket';
     }
     elsif ($path eq 'eventsource') {
-        return SockJS::Transport::EventSource->new;
+        $class = 'EventSource';
     }
     elsif ($path eq 'htmlfile') {
-        return SockJS::Transport::HtmlFile->new;
+        $class = 'HtmlFile';
     }
 
-    return;
+    return unless $class;
+
+    $class = "SockJS::Transport::$class";
+
+    return $class->new(@_);
 }
 
 1;

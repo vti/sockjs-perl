@@ -94,12 +94,25 @@ sub _dispatch_transport {
             sub {
                 my $session = shift;
 
+                warn 'CLOSED';
                 #        delete $self->{sessions}->{$id};
+            }
+        );
+
+        $session->on(
+            'aborted',
+            sub {
+                my $session = shift;
+
+                warn 'ABORTED: REMOVING SESSION';
+                delete $self->{sessions}->{$id};
             }
         );
     }
 
-    my $transport = SockJS::Transport->build($path);
+    my $transport =
+      SockJS::Transport->build($path,
+        response_limit => $self->{response_limit});
     return [
         404, ['Content-Type' => 'text/plain', 'Content-Length' => 9],
         ['Not found']

@@ -78,6 +78,7 @@ sub _get_content {
     my $d;
 
     if ($env->{CONTENT_TYPE} eq 'application/x-www-form-urlencoded') {
+        $chunk =~ s{\+}{ }g;
         ($d) = $chunk =~ m/(?:^|&|;)d=([^&;]*)/;
         $d =~ s/%(..)/chr(hex($1))/eg if defined $d;
     }

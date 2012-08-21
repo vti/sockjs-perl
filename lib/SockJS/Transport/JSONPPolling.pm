@@ -45,13 +45,19 @@ sub dispatch {
             ]
         );
 
+        if ($session->is_connected && !$session->is_reconnecting) {
+            my $message = $self->_wrap_message($callback,
+                'c[2010,"Another connection still open"]' . "\n");
+            $writer->close;
+            return;
+        }
+
         $session->on(
             syswrite => sub {
                 my $session = shift;
                 my ($message) = @_;
 
-                $message =~ s{"}{\\"}smg;
-                $message = qq{$callback("$message");\r\n};
+                $message = $self->_wrap_message($callback, $message);
 
                 $writer->write($message);
                 $writer->close;
@@ -60,14 +66,29 @@ sub dispatch {
             }
         );
 
-        if ($session->is_connected) {
+        if ($session->is_closed) {
+            $session->connected;
+            $session->close;
+        }
+        elsif ($session->is_connected) {
             $session->reconnected;
         }
         else {
             $session->syswrite('o');
+
             $session->connected;
         }
     };
+}
+
+sub _wrap_message {
+    my $self = shift;
+    my ($callback, $message) = @_;
+
+    $message =~ s/(['""\\\/\n\r\t]{1})/\\$1/smg;
+    $message = qq{$callback("$message");\r\n};
+
+    return $message;
 }
 
 1;

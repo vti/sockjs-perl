@@ -9,6 +9,8 @@ sub new {
     my $self = {@_};
     bless $self, $class;
 
+    $self->{response_limit} ||= 128 * 1024;
+
     return $self;
 }
 
@@ -39,15 +41,7 @@ sub dispatch {
     return [400, ['Content-Length' => 11], ['Bad request']]
       unless $env->{REQUEST_METHOD} eq 'POST';
 
-    if ($session->is_connected && !$session->is_reconnecting) {
-        return [
-            200,
-            ['Content-Length' => 40],
-            [qq{c[2010,"Another connection still open"]\n}]
-        ];
-    }
-
-    my $limit = 4096;
+    my $limit = $self->{response_limit};
 
     return sub {
         my $respond = shift;
@@ -66,6 +60,23 @@ sub dispatch {
             ]
         );
 
+        if ($session->is_connected && !$session->is_reconnecting) {
+            $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
+            $writer->write(
+                $self->_build_chunk(
+                    $chunked, 'c[2010,"Another connection still open"]' . "\n"
+                )
+            );
+            $writer->write($self->_build_chunk($chunked, ''));
+            $writer->close;
+        }
+
+        my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
+        $handle->on_error(sub { $session->aborted });
+        $handle->on_eof(sub   { $session->aborted });
+
+        $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
+
         $session->on(
             syswrite => sub {
                 my $session = shift;
@@ -79,7 +90,6 @@ sub dispatch {
                 if ($limit <= 0) {
                     $writer->write($self->_build_chunk($chunked, ''));
                     $writer->close;
-
                     $session->reconnecting;
                 }
             }
@@ -91,20 +101,22 @@ sub dispatch {
 
                 $writer->write($self->_build_chunk($chunked, ''));
                 $writer->close;
-
-                $session->reconnecting;
             }
         );
 
-        $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
-        $limit -= 4;
-        $session->syswrite('o');
-
-        if ($session->is_connected) {
-            $session->reconnected;
+        if ($session->is_closed) {
+            $session->close;
         }
         else {
-            $session->connected;
+            $limit -= 4;
+            $session->syswrite('o');
+
+            if ($session->is_connected) {
+                $session->reconnected;
+            }
+            else {
+                $session->connected;
+            }
         }
     };
 }

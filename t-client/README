@@ -1,0 +1,3 @@
+sudo npm install -g optparse
+sudo npm install -g coffee-script
+NODE_PATH=/usr/local/lib/node_modules/ make COFFEE=/usr/local/bin/coffee

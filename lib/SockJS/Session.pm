@@ -21,7 +21,9 @@ sub is_connected {
 sub connected {
     my $self = shift;
 
-    $self->{is_connected} = 1;
+    $self->{is_connected}    = 1;
+    $self->{is_reconnecting} = 0;
+    $self->{is_closed}       = 0;
 
     $self->_send_staged_messages;
 
@@ -54,6 +56,25 @@ sub reconnected {
     return $self;
 }
 
+sub closed {
+    my $self = shift;
+
+    $self->event('close');
+
+    $self->{is_connected} = 0;
+    $self->{is_closed}    = 1;
+
+    return $self;
+}
+
+sub aborted {
+    my $self = shift;
+
+    $self->event('aborted');
+
+    return $self;
+}
+
 sub is_closed {
     my $self = shift;
 
@@ -81,11 +102,13 @@ sub syswrite {
     my $self = shift;
     my ($message) = @_;
 
-    if (!$self->is_connected || $self->is_reconnecting) {
-        push @{$self->{messages}}, $message;
+    if (($self->is_connected || $self->is_closed)
+        && !$self->is_reconnecting)
+    {
+        $self->event('syswrite', $message);
     }
     else {
-        $self->event('syswrite', $message);
+        push @{$self->{messages}}, $message;
     }
 
     return $self;
@@ -95,20 +118,20 @@ sub close {
     my $self = shift;
     my ($code, $message) = @_;
 
-    $code = int $code;
-    $self->{close_message} = [$code, $message];
+    $self->{close_message} ||= [int $code, $message];
 
-    $self->syswrite(qq{c[$code,"$message"]});
+    $self->syswrite('c['
+          . $self->{close_message}->[0] . ',"'
+          . $self->{close_message}->[1]
+          . '"]');
 
-    $self->event('close');
-
-    $self->{is_closed} = 1;
+    $self->closed;
 
     return $self;
 }
 
 sub event {
-    my $self = shift;
+    my $self  = shift;
     my $event = shift;
 
     $self->{"on_$event"}->($self, @_) if exists $self->{"on_$event"};
@@ -140,11 +163,11 @@ sub _send_staged_messages {
         $self->event('syswrite', $message);
     }
 
-    if ($self->is_closed) {
-        my ($code, $message) = @{$self->{close_message}};
+    #if ($self->is_closed) {
+        #my ($code, $message) = @{$self->{close_message}};
 
-        $self->event('syswrite', qq{c[$code,"$message"]});
-    }
+        #$self->event('syswrite', qq{c[$code,"$message"]});
+    #}
 }
 
 1;

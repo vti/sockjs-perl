@@ -41,16 +41,13 @@ sub dispatch {
     return [400, ['Content-Length' => 11], ['Bad request']]
       unless $env->{REQUEST_METHOD} eq 'POST';
 
-    if ($session->is_connected && !$session->is_reconnecting) {
-        return [
-            200,
-            ['Content-Length' => 40],
-            [qq{c[2010,"Another connection still open"]\n}]
-        ];
-    }
-
     return sub {
         my $respond = shift;
+
+        if ($session->is_connected && !$session->is_reconnecting) {
+            $self->_write($env, $session, $respond, 'c[2010,"Another connection still open"]');
+            return;
+        }
 
         $session->on(
             syswrite => sub {
@@ -58,14 +55,20 @@ sub dispatch {
                 my ($message) = @_;
 
                 $self->_write($env, $session, $respond, $message);
+                $session->reconnecting;
             }
         );
 
-        if ($session->is_connected) {
+        if ($session->is_closed) {
+            $session->connected;
+            $session->close;
+        }
+        elsif ($session->is_connected) {
             $session->reconnected;
         }
         else {
             $session->syswrite('o');
+
             $session->connected;
         }
     };
@@ -93,8 +96,6 @@ sub _write {
             [$message]
         ]
     );
-
-    $session->reconnecting;
 }
 
 1;

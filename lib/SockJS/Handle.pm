@@ -16,9 +16,9 @@ sub new {
 
     $self->{heartbeat_timeout} ||= 10;
 
-    $fh->autoflush;
+    #$fh->autoflush;
 
-    $self->{handle}->no_delay(1);
+    #$self->{handle}->no_delay(1);
     $self->{handle}->on_eof(sub   { warn "Unhandled handle eof" });
     $self->{handle}->on_error(sub { warn "Unhandled handle error: $_[2]" });
 
