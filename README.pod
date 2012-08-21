@@ -15,6 +15,7 @@ Work's still in progress.
     JSONP Polling
     EventSource
     HtmlFile
+    IFrame XHR Polling/EvenSource/HtmlFile
 
 =head2 The Client-Side Part
 
@@ -41,7 +42,7 @@ L<http://sockjs.github.com/sockjs-client>.
 
 =head2 The Server-Side Part
 
-This is a testable server.
+Here is a simple echo server.
 
     #!/usr/bin/env perl
 
@@ -51,69 +52,33 @@ This is a testable server.
     use Plack::Builder;
     use SockJS;
 
-    my $echo = sub {
-        my ($session) = @_;
-
-        $session->on(
-            'data' => sub {
-                my $session = shift;
-
-                $session->write(@_);
-            }
-        );
-    };
-
     builder {
-        mount '/echo' => SockJS->new(handler => $echo);
-
-        mount '/disabled_websocket_echo' =>
-          SockJS->new(handler => $echo, websocket => 0);
-
-        mount '/cookie_needed_echo' => SockJS->new(handler => $echo, cookie => 1);
-
-        mount '/close' => SockJS->new(
+        mount '/echo' => SockJS->new(
             handler => sub {
-                my $session = shift;
+                my ($session) = @_;
 
-                $session->close(3000, 'Go away!');
-            }
+                $session->on(
+                    'data' => sub {
+                        my $session = shift;
+
+                        $session->write(@_);
+                    }
+                );
+            };
         );
-
-        mount '/' => sub {
-            my $env = shift;
-
-            if ($env->{PATH_INFO} ne '/') {
-                return [404, [], ['Not found']];
-            }
-
-            return [200, [], [<<'EOF']];
-    <script src="http://cdn.sockjs.org/sockjs-0.2.1.min.js"></script>
-
-    <script>
-      var sock = new SockJS('http://localhost:8081/echo');
-
-      sock.onopen = function() {
-        console.log("open");
-      };
-
-      sock.onmessage = function(e) {
-        console.log("message", e.data);
-      };
-
-      sock.onclose = function() {
-        console.log("close");
-      };
-    </script>
-    EOF
-          }
     };
 
-You can run SockJS tests againts the example server.
+=head2 Running browser tests
 
-=head2 Running SockJS tests
+Read the install instructions in C<t-client/README>. Start the test server and
+open a browser at C<http://localhost:8081> and run the qunit tests suite.
+
+=head2 Running protocol tests
 
 Clone L<http://github.com/sockjs/sockjs-protocol> and follow install
-instructions.
+instructions. Then start the test server setting C<TEST_PROTOCOL> environment
+variable (this is needed for setting smaller C<response_limit>) and then run the
+tests.
 
     # Run all the tests.
     ./venv/bin/python sockjs-protocol-dev.py
