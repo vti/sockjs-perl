@@ -3,11 +3,15 @@ package SockJS::Session;
 use strict;
 use warnings;
 
+use JSON;
+
 sub new {
     my $class = shift;
 
     my $self = {@_};
     bless $self, $class;
+
+    $self->{messages} = [];
 
     return $self;
 }
@@ -118,7 +122,12 @@ sub close {
     my $self = shift;
     my ($code, $message) = @_;
 
-    $self->{close_message} ||= [int $code, $message];
+    $self->{close_message} ||= do {
+        $code    ||= 3000;
+        $message ||= 'Get away!';
+
+        [int $code, $message];
+    };
 
     $self->syswrite('c['
           . $self->{close_message}->[0] . ',"'
@@ -162,12 +171,6 @@ sub _send_staged_messages {
 
         $self->event('syswrite', $message);
     }
-
-    #if ($self->is_closed) {
-        #my ($code, $message) = @{$self->{close_message}};
-
-        #$self->event('syswrite', qq{c[$code,"$message"]});
-    #}
 }
 
 1;
