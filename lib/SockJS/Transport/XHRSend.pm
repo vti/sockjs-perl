@@ -5,6 +5,8 @@ use warnings;
 
 use base 'SockJS::Transport::Base';
 
+use SockJS::Exception;
+
 sub new {
     my $self = shift->SUPER::new(@_);
 
