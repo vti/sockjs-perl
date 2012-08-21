@@ -6,7 +6,6 @@ use warnings;
 use base 'TestBase';
 
 use Test::More;
-use Test::Fatal;
 
 use SockJS::Session;
 

@@ -35,12 +35,16 @@ WriteMakefile(
     ),
 
     PREREQ_PM => {
-        'Carp'        => '0',
-        'Digest::MD5' => '',
+        'Carp'         => '0',
+        'Digest::MD5'  => '0',
+        'Scalar::Util' => '0',
 
-        'JSON'                => '',
-        'AnyEvent'            => '',
-        'Protocol::WebSocket' => '0.10'
+        'JSON'                => '0',
+        'AnyEvent'            => '0',
+        'Protocol::WebSocket' => '0.10',
+
+        'Test::More'  => '0',
+        'Test::Class' => '0'
     },
     test => {TESTS => 't/*.t t/*/*.t t/*/*/*.t t/*/*/*/*.t'}
 );
