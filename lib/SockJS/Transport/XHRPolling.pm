@@ -3,16 +3,9 @@ package SockJS::Transport::XHRPolling;
 use strict;
 use warnings;
 
+use base 'SockJS::Transport::Base';
+
 use SockJS::Exception;
-
-sub new {
-    my $class = shift;
-
-    my $self = {@_};
-    bless $self, $class;
-
-    return $self;
-}
 
 sub dispatch {
     my $self = shift;

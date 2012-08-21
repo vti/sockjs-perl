@@ -3,11 +3,10 @@ package SockJS::Transport::XHRStreaming;
 use strict;
 use warnings;
 
-sub new {
-    my $class = shift;
+use base 'SockJS::Transport::Base';
 
-    my $self = {@_};
-    bless $self, $class;
+sub new {
+    my $self = shift->SUPER::new(@_);
 
     $self->{response_limit} ||= 128 * 1024;
 

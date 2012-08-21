@@ -6,7 +6,7 @@ SockJS-perl - a SockJS Perl Plack/PSGI implementation
 
 =head1 DESCRIPTION
 
-=head2 Supported transports
+=head2 Supported features
 
 Work's still in progress.
 
@@ -16,6 +16,8 @@ Work's still in progress.
     EventSource
     HtmlFile
     IFrame XHR Polling/EvenSource/HtmlFile
+
+    JSessionID
 
 =head2 The Client-Side Part
 

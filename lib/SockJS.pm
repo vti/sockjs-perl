@@ -12,6 +12,7 @@ use Digest::MD5  ();
 use Scalar::Util ();
 
 use Plack::Middleware::ContentLength;
+use SockJS::Middleware::JSessionID;
 use SockJS::Transport;
 use SockJS::Session;
 
@@ -31,8 +32,9 @@ sub new {
 sub to_app {
     my $self = shift;
 
-    return Plack::Middleware::ContentLength->new->wrap(sub { $self->call(@_) }
-    );
+    return SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
+      ->wrap(
+        Plack::Middleware::ContentLength->new->wrap(sub { $self->call(@_) }));
 }
 
 sub call {
@@ -115,6 +117,8 @@ sub _dispatch_transport {
         response_limit => $self->{response_limit});
     return [404, ['Content-Type' => 'text/plain'], ['Not found']]
       unless $transport;
+
+    $env->{'sockjs.transport'} = $transport->name;
 
     my $response;
     eval { $response = $transport->dispatch($env, $session, $path) } || do {

@@ -47,7 +47,7 @@ sub build {
 
     $class = "SockJS::Transport::$class";
 
-    return $class->new(@_);
+    return $class->new(name => $path, @_);
 }
 
 1;

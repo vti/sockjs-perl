@@ -3,19 +3,12 @@ package SockJS::Transport::WebSocket;
 use strict;
 use warnings;
 
+use base 'SockJS::Transport::Base';
+
 use Protocol::WebSocket::Handshake::Server;
 
 use SockJS::Handle;
 use SockJS::Exception;
-
-sub new {
-    my $class = shift;
-
-    my $self = {@_};
-    bless $self, $class;
-
-    return $self;
-}
 
 sub dispatch {
     my $self = shift;

@@ -3,14 +3,7 @@ package SockJS::Transport::JSONPPolling;
 use strict;
 use warnings;
 
-sub new {
-    my $class = shift;
-
-    my $self = {@_};
-    bless $self, $class;
-
-    return $self;
-}
+use base 'SockJS::Transport::Base';
 
 sub dispatch {
     my $self = shift;
