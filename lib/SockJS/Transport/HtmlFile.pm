@@ -68,14 +68,7 @@ sub dispatch_GET {
             }
         );
 
-        $session->on(
-            close => sub {
-                my $session = shift;
-                my ($code, $message) = @_;
-
-                $writer->close;
-            }
-        );
+        $session->on(close => sub { $writer->close });
 
         $writer->write(<<"EOF");
 <!doctype html>

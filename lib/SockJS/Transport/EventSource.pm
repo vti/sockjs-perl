@@ -64,15 +64,14 @@ sub dispatch_GET {
         $session->syswrite('o');
 
         if ($session->is_closed) {
+            $session->connected;
             $session->close;
         }
+        elsif ($session->is_connected) {
+            $session->reconnected;
+        }
         else {
-            if ($session->is_connected) {
-                $session->reconnected;
-            }
-            else {
-                $session->connected;
-            }
+            $session->connected;
         }
     };
 }
