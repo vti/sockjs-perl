@@ -36,10 +36,9 @@ sub dispatch {
         ];
     }
 
-    return [400, ['Content-Length' => 11], ['Bad request']]
-      unless $env->{REQUEST_METHOD} eq 'POST';
+    return [400, [], ['Bad request']] unless $env->{REQUEST_METHOD} eq 'POST';
 
-    return [404, ['Content-Length' => 9], ['Not found']]
+    return [404, [], ['Not found']]
       unless $session->is_connected;
 
     my $data = $self->_get_content($env);
@@ -82,13 +81,7 @@ sub _return_send_error {
     my $self = shift;
     my ($error) = @_;
 
-    return [
-        500,
-        [   'Content-Length' => length($error),
-            'Content-Type'   => 'text/plain; charset=UTF-8',
-        ],
-        [$error]
-    ];
+    return [500, ['Content-Type' => 'text/plain; charset=UTF-8'], [$error]];
 }
 
 1;

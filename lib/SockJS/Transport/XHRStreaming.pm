@@ -38,8 +38,7 @@ sub dispatch {
         ];
     }
 
-    return [400, ['Content-Length' => 11], ['Bad request']]
-      unless $env->{REQUEST_METHOD} eq 'POST';
+    return [400, [], ['Bad request']] unless $env->{REQUEST_METHOD} eq 'POST';
 
     my $limit = $self->{response_limit};
 

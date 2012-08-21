@@ -38,8 +38,7 @@ sub dispatch {
         ];
     }
 
-    return [400, ['Content-Length' => 11], ['Bad request']]
-      unless $env->{REQUEST_METHOD} eq 'POST';
+    return [400, [], ['Bad request']] unless $env->{REQUEST_METHOD} eq 'POST';
 
     return sub {
         my $respond = shift;
@@ -88,7 +87,6 @@ sub _write {
     $respond->(
         [   200,
             [   'Content-Type'   => 'application/javascript; charset=UTF-8',
-                'Content-Length' => length($message),
                 'Access-Control-Allow-Origin'      => '*',
                 'Access-Control-Allow-Credentials' => 'true',
                 @headers

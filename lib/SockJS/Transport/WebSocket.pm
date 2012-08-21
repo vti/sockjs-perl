@@ -21,8 +21,7 @@ sub dispatch {
     my $self = shift;
     my ($env, $session) = @_;
 
-    return [405, ['Allow' => 'GET', 'Content-Length' => 0], []]
-      unless $env->{REQUEST_METHOD} eq 'GET';
+    return [405, ['Allow' => 'GET'], []] unless $env->{REQUEST_METHOD} eq 'GET';
 
     my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
 
@@ -65,7 +64,7 @@ sub _return_error {
     my $self = shift;
     my ($code, $message) = @_;
 
-    return [$code, ['Content-Length' => length $message], [$message]];
+    return [$code, [], [$message]];
 }
 
 sub _handshake_written_cb {

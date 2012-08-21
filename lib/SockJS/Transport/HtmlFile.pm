@@ -20,12 +20,12 @@ sub dispatch {
 
     my ($callback) = $env->{QUERY_STRING} =~ m/(?:^|&|;)c=([^&;]+)/;
     if (!$callback) {
-        return [500, ['Content-Length' => 29], ['"callback" parameter required']];
+        return [500, [], ['"callback" parameter required']];
     }
 
     $callback =~ s/%(..)/chr(hex($1))/eg;
     if ($callback !~ m/^[a-zA-Z0-9-_\.]+$/) {
-        return [500, ['Content-Length' => 28], ['invalid "callback" parameter']];
+        return [500, [], ['invalid "callback" parameter']];
     }
 
     my $limit = $self->{response_limit};

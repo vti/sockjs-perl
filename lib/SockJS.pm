@@ -11,6 +11,7 @@ use JSON         ();
 use Digest::MD5  ();
 use Scalar::Util ();
 
+use Plack::Middleware::ContentLength;
 use SockJS::Transport;
 use SockJS::Session;
 
@@ -30,7 +31,8 @@ sub new {
 sub to_app {
     my $self = shift;
 
-    return sub { $self->call(@_) };
+    return Plack::Middleware::ContentLength->new->wrap(sub { $self->call(@_) }
+    );
 }
 
 sub call {
@@ -55,7 +57,7 @@ sub call {
         return $self->_dispatch_iframe($env);
     }
 
-    return [404, ['Content-Length' => 9], ['Not found']];
+    return [404, [], ['Not found']];
 }
 
 sub _dispatch_welcome_page {
@@ -63,10 +65,7 @@ sub _dispatch_welcome_page {
     my ($env) = @_;
 
     return [
-        200,
-        [   'Content-Type'   => 'text/plain; charset=UTF-8',
-            'Content-Length' => '19'
-        ],
+        200, ['Content-Type' => 'text/plain; charset=UTF-8',],
         ["Welcome to SockJS!\n"]
     ];
 }
@@ -95,6 +94,7 @@ sub _dispatch_transport {
                 my $session = shift;
 
                 warn 'CLOSED';
+
                 #        delete $self->{sessions}->{$id};
             }
         );
@@ -113,10 +113,7 @@ sub _dispatch_transport {
     my $transport =
       SockJS::Transport->build($path,
         response_limit => $self->{response_limit});
-    return [
-        404, ['Content-Type' => 'text/plain', 'Content-Length' => 9],
-        ['Not found']
-      ]
+    return [404, ['Content-Type' => 'text/plain'], ['Not found']]
       unless $transport;
 
     my $response;
@@ -132,7 +129,7 @@ sub _dispatch_transport {
             $error = $e->message;
         }
 
-        $response = [$code, ['Content-Length' => length $error], [$error]];
+        $response = [$code, [], [$error]];
     };
 
     return $response;
@@ -176,8 +173,7 @@ sub _dispatch_info {
 
     return [
         200,
-        [   'Content-Type'   => 'application/json; charset=UTF-8',
-            'Content-Length' => length($info),
+        [   'Content-Type' => 'application/json; charset=UTF-8',
             'Cache-Control' =>
               'no-store, no-cache, must-revalidate, max-age=0',
             @cors_headers
@@ -220,11 +216,10 @@ EOF
 
     return [
         200,
-        [   'Content-Type'   => 'text/html; charset=UTF-8',
-            'Content-Length' => length($body),
-            'Expires'        => '31536000',
-            'Cache-Control'  => 'public;max-age=31536000',
-            'Etag'           => Digest::MD5::md5_hex($body)
+        [   'Content-Type'  => 'text/html; charset=UTF-8',
+            'Expires'       => '31536000',
+            'Cache-Control' => 'public;max-age=31536000',
+            'Etag'          => Digest::MD5::md5_hex($body)
         ],
         [$body]
     ];
