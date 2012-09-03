@@ -33,7 +33,6 @@ sub dispatch_GET {
         my $writer = $respond->(
             [   200,
                 [   'Content-Type' => 'application/javascript; charset=UTF-8',
-                    'Connection'   => 'close',
                     'Cache-Control' =>
                       'no-store, no-cache, must-revalidate, max-age=0'
                 ]
@@ -43,6 +42,7 @@ sub dispatch_GET {
         if ($session->is_connected && !$session->is_reconnecting) {
             my $message = $self->_wrap_message($callback,
                 'c[2010,"Another connection still open"]' . "\n");
+            $writer->write('');
             $writer->close;
             return;
         }
@@ -55,6 +55,7 @@ sub dispatch_GET {
                 $message = $self->_wrap_message($callback, $message);
 
                 $writer->write($message);
+                $writer->write('');
                 $writer->close;
 
                 $session->reconnecting if $session->is_connected;

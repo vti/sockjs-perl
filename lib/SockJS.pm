@@ -11,7 +11,8 @@ use JSON         ();
 use Digest::MD5  ();
 use Scalar::Util ();
 
-use Plack::Middleware::ContentLength;
+use Plack::Middleware::Chunked;
+use SockJS::Middleware::Http10;
 use SockJS::Middleware::JSessionID;
 use SockJS::Transport;
 use SockJS::Session;
@@ -32,9 +33,15 @@ sub new {
 sub to_app {
     my $self = shift;
 
-    return SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
-      ->wrap(
-        Plack::Middleware::ContentLength->new->wrap(sub { $self->call(@_) }));
+    my $app = sub { $self->call(@_) };
+
+    $app = SockJS::Middleware::Http10->new->wrap($app);
+    $app = Plack::Middleware::Chunked->new->wrap($app);
+    $app =
+      SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
+      ->wrap($app);
+
+    return $app;
 }
 
 sub call {
@@ -76,42 +83,6 @@ sub _dispatch_transport {
     my $self = shift;
     my ($env, $id, $path) = @_;
 
-    my $session = $self->{sessions}->{$id};
-
-    if (!$session) {
-        $session = $self->{sessions}->{$id} = SockJS::Session->new;
-
-        $session->on(
-            'connected',
-            sub {
-                my $session = shift;
-
-                $self->{handler}->($session);
-            }
-        );
-
-        $session->on(
-            'closed',
-            sub {
-                my $session = shift;
-
-                warn 'CLOSED';
-
-                #        delete $self->{sessions}->{$id};
-            }
-        );
-
-        $session->on(
-            'aborted',
-            sub {
-                my $session = shift;
-
-                warn 'ABORTED: REMOVING SESSION';
-                delete $self->{sessions}->{$id};
-            }
-        );
-    }
-
     my $transport =
       SockJS::Transport->build($path,
         response_limit => $self->{response_limit});
@@ -119,6 +90,43 @@ sub _dispatch_transport {
       unless $transport;
 
     $env->{'sockjs.transport'} = $transport->name;
+
+    my $session = $self->{sessions}->{$id};
+
+    if (!$session || $transport->name eq 'websocket') {
+        $session = SockJS::Session->new;
+
+        if ($transport->name eq 'websocket') {
+            push @{$self->{sessions}->{$id}}, $session;
+        }
+        else {
+            $self->{sessions}->{$id} = $session;
+        }
+
+        $session->on(
+            connected => sub {
+                my $session = shift;
+
+                $self->{handler}->($session);
+            }
+        );
+
+        $session->on(
+            aborted => sub {
+                my $session = shift;
+
+                warn 'ABORTED: REMOVING SESSION';
+                if (ref $self->{sessions}->{$id} eq 'ARRAY') {
+                    $self->{sessions}->{$id} =
+                      [grep { "$_" ne "$session" }
+                          @{$self->{sessions}->{$id}}];
+                }
+                else {
+                    delete $self->{sessions}->{$id};
+                }
+            }
+        );
+    }
 
     my $response;
     eval { $response = $transport->dispatch($env, $session, $path) } || do {
@@ -155,13 +163,12 @@ sub _dispatch_info {
         return [
             204,
             [   'Expires'                      => '31536000',
-                'Content-Length'               => 0,
                 'Cache-Control'                => 'public;max-age=31536000',
                 'Access-Control-Allow-Methods' => 'OPTIONS, GET',
                 'Access-Control-Max-Age'       => '31536000',
                 @cors_headers
             ],
-            ['']
+            []
         ];
     }
 
@@ -180,6 +187,7 @@ sub _dispatch_info {
         [   'Content-Type' => 'application/json; charset=UTF-8',
             'Cache-Control' =>
               'no-store, no-cache, must-revalidate, max-age=0',
+            'Access-Control-Allow-Headers' => 'origin, content-type',
             @cors_headers
         ],
         [$info]
@@ -218,12 +226,19 @@ EOF
         }
     }
 
+    my $origin = $env->{HTTP_ORIGIN};
+    my @cors_headers = (
+        'Access-Control-Allow-Origin' => !$origin
+          || $origin eq 'null' ? '*' : $origin,
+        'Access-Control-Allow-Credentials' => 'true'
+    );
     return [
         200,
         [   'Content-Type'  => 'text/html; charset=UTF-8',
             'Expires'       => '31536000',
             'Cache-Control' => 'public;max-age=31536000',
-            'Etag'          => Digest::MD5::md5_hex($body)
+            'Etag'          => Digest::MD5::md5_hex($body),
+            @cors_headers
         ],
         [$body]
     ];

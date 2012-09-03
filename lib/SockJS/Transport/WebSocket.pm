@@ -84,14 +84,12 @@ sub _handshake_written_cb {
         my $frame = $hs->build_frame;
 
         my $close_cb = sub {
-            $session->event('closed');
+            $session->aborted;
 
             $handle->close;
         };
         $handle->on_eof($close_cb);
         $handle->on_error($close_cb);
-
-        #$handle->on_heartbeat(sub { $conn->send_heartbeat });
 
         $handle->on_read(
             sub {

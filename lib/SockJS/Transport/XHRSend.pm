@@ -34,12 +34,18 @@ sub dispatch_POST {
         $session->event('data', @$message);
     }
 
+    my $origin       = $env->{HTTP_ORIGIN};
+    my @cors_headers = (
+        'Access-Control-Allow-Origin' => !$origin
+          || $origin eq 'null' ? '*' : $origin,
+        'Access-Control-Allow-Credentials' => 'true'
+    );
+
     return [
         204,
-        [   'Content-Length'                   => 0,
-            'Content-Type'                     => 'text/plain; charset=UTF-8',
-            'Access-Control-Allow-Origin'      => '*',
-            'Access-Control-Allow-Credentials' => 'true'
+        [   'Content-Type'                 => 'text/plain; charset=UTF-8',
+            'Access-Control-Allow-Headers' => 'origin, content-type',
+            @cors_headers
         ],
         []
     ];

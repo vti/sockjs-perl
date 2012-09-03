@@ -70,7 +70,7 @@ sub dispatch_GET {
 
         $session->on(close => sub { $writer->close });
 
-        $writer->write(<<"EOF");
+        $writer->write((' ' x 1024) . <<"EOF");
 <!doctype html>
 <html><head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -84,7 +84,6 @@ sub dispatch_GET {
     window.onload = function() {c.stop();};
   </script>
 EOF
-        $writer->write(' ' x 1024);
 
         $session->syswrite('o');
 

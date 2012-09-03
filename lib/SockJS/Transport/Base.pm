@@ -46,7 +46,8 @@ sub dispatch_OPTIONS {
             'Cache-Control' => 'public;max-age=31536000',
             'Access-Control-Allow-Methods' =>
               join(', ', @{$self->{allowed_methods}}),
-            'Access-Control-Max-Age' => '31536000',
+            'Access-Control-Max-Age'       => '31536000',
+            'Access-Control-Allow-Headers' => 'origin, content-type',
             @cors_headers
         ],
         ['']

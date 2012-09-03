@@ -27,7 +27,6 @@ sub dispatch_GET {
         my $writer = $respond->(
             [   200,
                 [   'Content-Type' => 'text/event-stream; charset=UTF-8',
-                    'Connection'   => 'close',
                     'Cache-Control' =>
                       'no-store, no-cache, must-revalidate, max-age=0'
                 ]
@@ -36,7 +35,9 @@ sub dispatch_GET {
 
         if ($session->is_connected && !$session->is_reconnecting) {
             $writer->write("\x0d\x0a");
-            $writer->write(qq{data: c[2010,"Another connection still open"]\x0d\x0a\x0d\x0a\n"});
+            $writer->write(
+                qq{data: c[2010,"Another connection still open"]\x0d\x0a\x0d\x0a\n"}
+            );
             $writer->close;
             return;
         }

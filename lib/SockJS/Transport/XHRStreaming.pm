@@ -24,49 +24,46 @@ sub dispatch_POST {
     return sub {
         my $respond = shift;
 
-        my $chunked = $env->{SERVER_PROTOCOL} eq 'HTTP/1.1';
+        my $origin       = $env->{HTTP_ORIGIN};
+        my @cors_headers = (
+            'Access-Control-Allow-Origin' => !$origin
+              || $origin eq 'null' ? '*' : $origin,
+            'Access-Control-Allow-Credentials' => 'true'
+        );
 
         my $writer = $respond->(
             [   200,
                 [   'Content-Type' => 'application/javascript; charset=UTF-8',
-                    'Access-Control-Allow-Origin'      => '*',
-                    'Access-Control-Allow-Credentials' => 'true',
-                    $chunked
-                    ? ('Transfer-Encoding' => 'chunked')
-                    : ()
+                    @cors_headers
                 ]
             ]
         );
 
         if ($session->is_connected && !$session->is_reconnecting) {
-            $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
-            $writer->write(
-                $self->_build_chunk(
-                    $chunked, 'c[2010,"Another connection still open"]' . "\n"
-                )
-            );
-            $writer->write($self->_build_chunk($chunked, ''));
+            $writer->write(('h' x 2048) . "\n");
+            $writer->write('c[2010,"Another connection still open"]' . "\n");
+            $writer->write('');
             $writer->close;
+            return;
         }
 
-        my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
-        $handle->on_error(sub { $session->aborted });
-        $handle->on_eof(sub   { $session->aborted });
+        #my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
+        #$handle->on_error(sub { $session->aborted });
+        #$handle->on_eof(sub   { $session->aborted });
 
-        $writer->write($self->_build_chunk($chunked, ('h' x 2048) . "\n"));
+        $writer->write(('h' x 2048) . "\n");
 
         $session->on(
             syswrite => sub {
                 my $session = shift;
                 my ($message) = @_;
 
-                $writer->write(
-                    $self->_build_chunk($chunked, $message . "\n"));
+                $writer->write($message . "\n");
 
                 $limit -= length($message) - 1;
 
                 if ($limit <= 0) {
-                    $writer->write($self->_build_chunk($chunked, ''));
+                    $writer->write('');
                     $writer->close;
                     $session->reconnecting;
                 }
@@ -77,12 +74,13 @@ sub dispatch_POST {
             close => sub {
                 my $session = shift;
 
-                $writer->write($self->_build_chunk($chunked, ''));
+                $writer->write('');
                 $writer->close;
             }
         );
 
         if ($session->is_closed) {
+            $session->connected;
             $session->close;
         }
         else {
@@ -97,19 +95,6 @@ sub dispatch_POST {
             }
         }
     };
-}
-
-sub _build_chunk {
-    my $self = shift;
-    my ($chunked, $chunk) = @_;
-
-    return $chunk unless $chunked;
-
-    return
-        (unpack 'H*', pack 'N*', length($chunk))
-      . "\x0d\x0a"
-      . $chunk
-      . "\x0d\x0a";
 }
 
 1;

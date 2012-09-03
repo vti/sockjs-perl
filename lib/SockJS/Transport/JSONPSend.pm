@@ -20,7 +20,6 @@ sub dispatch_POST {
     return [404, [], ['Not found']] unless $session->is_connected;
 
     my $data = $self->_get_content($env);
-
     return $self->_return_send_error('Payload expected.') unless length $data;
 
     my $message;
@@ -35,6 +34,7 @@ sub dispatch_POST {
     return [
         200,
         [   'Content-Type'                     => 'text/plain; charset=UTF-8',
+            'Content-Length'                   => 2,
             'Access-Control-Allow-Origin'      => '*',
             'Access-Control-Allow-Credentials' => 'true'
         ],
