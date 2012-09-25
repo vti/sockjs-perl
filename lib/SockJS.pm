@@ -115,11 +115,12 @@ sub _dispatch_transport {
             aborted => sub {
                 my $session = shift;
 
-                warn 'ABORTED: REMOVING SESSION';
                 if (ref $self->{sessions}->{$id} eq 'ARRAY') {
                     $self->{sessions}->{$id} =
                       [grep { "$_" ne "$session" }
                           @{$self->{sessions}->{$id}}];
+                    delete $self->{sessions}->{$id}
+                      unless @{$self->{sessions}->{$id}};
                 }
                 else {
                     delete $self->{sessions}->{$id};
