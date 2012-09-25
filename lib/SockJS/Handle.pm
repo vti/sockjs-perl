@@ -90,7 +90,7 @@ sub write {
     my ($chunk, $cb) = @_;
 
     my $handle = $self->{handle};
-    die 'Handle is closed' unless $handle;
+    return unless $handle;
 
     $handle->push_write($chunk);
 
