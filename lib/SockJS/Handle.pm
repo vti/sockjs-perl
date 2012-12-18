@@ -113,7 +113,10 @@ sub close {
     my $self = shift;
 
     my $handle = delete $self->{handle};
-    die 'Handle is already closed' unless $handle;
+    unless ($handle) {
+        warn 'Handle is already closed';
+        return;
+    }
 
     $handle->wtimeout(0);
 
