@@ -16,6 +16,22 @@ sub new {
     return $self;
 }
 
+sub set {
+    my $self = shift;
+    my ($key, $value) = @_;
+
+    $self->{custom}->{$key} = $value;
+
+    return $self;
+}
+
+sub get {
+    my $self = shift;
+    my ($key) = @_;
+
+    return $self->{custom}->{$key};
+}
+
 sub type { $_[0]->{type} }
 
 sub is_connected {
