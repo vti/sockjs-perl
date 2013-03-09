@@ -27,6 +27,8 @@ sub new {
 
     $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-3.min.js';
 
+    $self->{session_factory} ||= sub { SockJS::Session->new };
+
     return $self;
 }
 
@@ -94,7 +96,7 @@ sub _dispatch_transport {
     my $session = $self->{sessions}->{$id};
 
     if (!$session || $transport->name eq 'websocket') {
-        $session = SockJS::Session->new;
+        $session = $self->{session_factory}->($self);
 
         if ($transport->name eq 'websocket') {
             push @{$self->{sessions}->{$id}}, $session;
