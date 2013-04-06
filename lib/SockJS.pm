@@ -19,15 +19,25 @@ use SockJS::Session;
 
 sub new {
     my $class = shift;
+    my (%params) = @_;
 
-    my $self = {@_};
+    my $self = {};
     bless $self, $class;
 
-    $self->{websocket} = 1 unless exists $self->{websocket};
+    $self->{handler} = $params{handler};
 
-    $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-3.min.js';
+    $self->{websocket}       = $params{websocket};
+    $self->{cookie}          = $params{cookie};
+    $self->{chunked}         = $params{chunked};
+    $self->{sockjs_url}      = $params{sockjs_url};
+    $self->{session_factory} = $params{session_factory};
 
+    $self->{websocket} = 1 unless defined $params{websocket};
+    $self->{chunked}   = 1 unless defined $params{chunked};
+    $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-0.3.2.min.js';
     $self->{session_factory} ||= sub { SockJS::Session->new };
+
+    $self->{sessions} = {};
 
     return $self;
 }
@@ -38,7 +48,7 @@ sub to_app {
     my $app = sub { $self->call(@_) };
 
     $app = SockJS::Middleware::Http10->new->wrap($app);
-    $app = Plack::Middleware::Chunked->new->wrap($app);
+    $app = Plack::Middleware::Chunked->new->wrap($app) if $self->{chunked};
     $app =
       SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
       ->wrap($app);
@@ -119,8 +129,7 @@ sub _dispatch_transport {
 
                 if (ref $self->{sessions}->{$id} eq 'ARRAY') {
                     $self->{sessions}->{$id} =
-                      [grep { "$_" ne "$session" }
-                          @{$self->{sessions}->{$id}}];
+                      [grep { "$_" ne "$session" } @{$self->{sessions}->{$id}}];
                     delete $self->{sessions}->{$id}
                       unless @{$self->{sessions}->{$id}};
                 }
@@ -165,7 +174,8 @@ sub _dispatch_info {
     if ($env->{REQUEST_METHOD} eq 'OPTIONS') {
         return [
             204,
-            [   'Expires'                      => '31536000',
+            [
+                'Expires'                      => '31536000',
                 'Cache-Control'                => 'public;max-age=31536000',
                 'Access-Control-Allow-Methods' => 'OPTIONS, GET',
                 'Access-Control-Max-Age'       => '31536000',
@@ -176,7 +186,8 @@ sub _dispatch_info {
     }
 
     my $info = JSON::encode_json(
-        {     websocket => $self->{websocket} ? JSON::true
+        {
+              websocket => $self->{websocket} ? JSON::true
             : JSON::false,
             cookie_needed => $self->{cookie} ? JSON::true
             : JSON::false,
@@ -187,9 +198,9 @@ sub _dispatch_info {
 
     return [
         200,
-        [   'Content-Type' => 'application/json; charset=UTF-8',
-            'Cache-Control' =>
-              'no-store, no-cache, must-revalidate, max-age=0',
+        [
+            'Content-Type'  => 'application/json; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Access-Control-Allow-Headers' => 'origin, content-type',
             @cors_headers
         ],
@@ -229,7 +240,7 @@ EOF
         }
     }
 
-    my $origin = $env->{HTTP_ORIGIN};
+    my $origin       = $env->{HTTP_ORIGIN};
     my @cors_headers = (
         'Access-Control-Allow-Origin' => !$origin
           || $origin eq 'null' ? '*' : $origin,
@@ -237,7 +248,8 @@ EOF
     );
     return [
         200,
-        [   'Content-Type'  => 'text/html; charset=UTF-8',
+        [
+            'Content-Type'  => 'text/html; charset=UTF-8',
             'Expires'       => '31536000',
             'Cache-Control' => 'public;max-age=31536000',
             'Etag'          => Digest::MD5::md5_hex($body),

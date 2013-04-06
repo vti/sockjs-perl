@@ -33,7 +33,7 @@ builder {
     mount '/config.js' => sub {
         my $body = <<'EOF';
 var server_opts = {
-    sockjs_url: 'http://localhsot:8081/lib/sockjs.js'
+    sockjs_url: 'http://localhost:8081/lib/sockjs.js'
 };
 var client_opts = {
     url: 'http://localhost:8081',
@@ -52,8 +52,10 @@ EOF
     mount '/simple.txt' => sub {
         my $body = ('a' x 2048) . "\nb\n";
 
-        [   200,
-            [   'Content-Type'                => 'text/plain',
+        [
+            200,
+            [
+                'Content-Type'                => 'text/plain',
                 'Access-Control-Allow-Origin' => '*'
             ],
             [$body]
@@ -69,8 +71,10 @@ EOF
             my $respond = shift;
 
             my $writer = $respond->(
-                [   200,
-                    [   'Content-Type'                => 'text/plain',
+                [
+                    200,
+                    [
+                        'Content-Type'                => 'text/plain',
                         'Access-Control-Allow-Origin' => '*'
                     ]
                 ]
@@ -92,7 +96,7 @@ EOF
     mount '/lib/sockjs.js' => sub {
         my $body = do {
             local $/;
-            open my $fh, '<', "$root/sockjs-0.3.min.js" or die $!;
+            open my $fh, '<', "$root/sockjs-0.3.2.min.js" or die $!;
             <$fh>;
         };
         [200, ['Content-Type' => 'application/javascript'], [$body]];
@@ -120,7 +124,7 @@ EOF
                         my $n = int $m;
                         $n = ($n > 0 && $n < 19) ? $n : 1;
 
-                        $session->write('x' x 2**$n);
+                        $session->write('x' x (2 ** $n));
                     }
                 }
             );

@@ -1,4 +1,4 @@
-/* SockJS client, version 0.3.2, http://sockjs.org, MIT License
+/* SockJS client, version 0.3.2.3.g2a1c, http://sockjs.org, MIT License
 
 Copyright (c) 2011-2012 VMware, Inc.
 
@@ -953,7 +953,7 @@ var SockJS = function(url, dep_protocols_whitelist, options) {
 // Inheritance
 SockJS.prototype = new REventTarget();
 
-SockJS.version = "0.3.2";
+SockJS.version = "0.3.2.3.g2a1c";
 
 SockJS.CONNECTING = 0;
 SockJS.OPEN = 1;
