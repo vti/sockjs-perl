@@ -1,3 +1,0 @@
-[submodule "contrib/sockjs-client"]
-	path = contrib/sockjs-client
-	url = https://github.com/sockjs/sockjs-client
