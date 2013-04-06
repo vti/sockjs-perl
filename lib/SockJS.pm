@@ -260,3 +260,63 @@ EOF
 }
 
 1;
+__END__
+
+=head1 NAME
+
+SockJS - SockJS Perl implementation
+
+=head1 SYNOPSIS
+
+    use Plack::Builder;
+    use SockJS;
+
+    builder {
+        mount '/echo' => SockJS->new(
+            handler => sub {
+                my ($session) = @_;
+
+                $session->on(
+                    'data' => sub {
+                        my $session = shift;
+
+                        $session->write(@_);
+                    }
+                );
+            };
+        );
+    };
+
+=head1 DESCRIPTION
+
+L<SockJS> is a Perl implementation of L<http://sockjs.org>.
+
+=head1 WARNINGS
+
+When using L<Twiggy> there is no chunked support, thus try my fork
+L<http://github.com/vti/Twiggy>.
+
+=head1 EXAMPLE
+
+See C<example/> directory.
+
+=head1 DEVELOPMENT
+
+=head2 Repository
+
+    http://github.com/vti/sockjs-perl
+
+=head1 CREDITS
+
+=head1 AUTHOR
+
+Viacheslav Tykhanovskyi, C<vti@cpan.org>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Viacheslav Tykhanovskyi
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut

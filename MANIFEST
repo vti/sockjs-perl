@@ -1,0 +1,27 @@
+example/app.psgi
+example/public/index.html
+example/public/sockjs-0.3.2.min.js
+lib/SockJS.pm
+lib/SockJS/Exception.pm
+lib/SockJS/Handle.pm
+lib/SockJS/Middleware/Http10.pm
+lib/SockJS/Middleware/JSessionID.pm
+lib/SockJS/Session.pm
+lib/SockJS/Transport.pm
+lib/SockJS/Transport/Base.pm
+lib/SockJS/Transport/EventSource.pm
+lib/SockJS/Transport/HtmlFile.pm
+lib/SockJS/Transport/JSONPPolling.pm
+lib/SockJS/Transport/JSONPSend.pm
+lib/SockJS/Transport/WebSocket.pm
+lib/SockJS/Transport/XHRPolling.pm
+lib/SockJS/Transport/XHRSend.pm
+lib/SockJS/Transport/XHRStreaming.pm
+Makefile.PL
+MANIFEST			This list of files
+README.pod
+t/00core.t
+t/core/MiddlewareJSessionIDTest.pm
+t/core/SessionTest.pm
+t/lib/TestBase.pm
+t/lib/TestLoader.pm
