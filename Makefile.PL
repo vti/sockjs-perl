@@ -17,9 +17,11 @@ WriteMakefile(
 
     ($mm < 6.3002 ? () : ('LICENSE' => 'artistic_2')),
 
-    (   $mm < 6.46
+    (
+        $mm < 6.46
         ? ()
-        : ( META_MERGE => {
+        : (
+            META_MERGE => {
                 requires  => {perl => '5.008007'},
                 resources => {
                     license    => 'http://dev.perl.org/licenses/',
@@ -39,6 +41,7 @@ WriteMakefile(
         'Digest::MD5'  => '0',
         'Scalar::Util' => '0',
 
+        'Plack'               => '0',
         'JSON'                => '0',
         'AnyEvent'            => '0',
         'Protocol::WebSocket' => '0.10',
