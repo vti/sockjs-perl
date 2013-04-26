@@ -84,13 +84,13 @@ sub dispatch_POST {
             $session->close;
         }
         else {
-            $limit -= 4;
-            $session->syswrite('o');
-
             if ($session->is_connected) {
                 $session->reconnected;
             }
             else {
+                $limit -= 4;
+                $session->syswrite('o');
+
                 $session->connected;
             }
         }
