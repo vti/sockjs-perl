@@ -106,7 +106,7 @@ sub _dispatch_transport {
     my $session = $self->{sessions}->{$id};
 
     if (!$session || $transport->name eq 'websocket') {
-        $session = $self->{session_factory}->($self);
+        $session = $self->{session_factory}->($self, $id);
 
         if ($transport->name eq 'websocket') {
             push @{$self->{sessions}->{$id}}, $session;
