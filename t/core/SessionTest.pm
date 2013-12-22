@@ -205,6 +205,21 @@ sub fire_close_event_when_abort_not_set : Test {
     is($written, 'close');
 }
 
+sub fire_abort_event_on_aborted : Test {
+    my $self = shift;
+
+    my $written = '';
+
+    my $session = $self->_build_session;
+    $session->on('close', sub { $written .= 'close' });
+    $session->on('abort', sub { $written .= 'abort' });
+
+    $session->connected;
+    $session->aborted;
+
+    is($written, 'abort');
+}
+
 sub _build_session {
     my $self = shift;
 

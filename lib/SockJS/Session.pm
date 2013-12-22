@@ -92,8 +92,8 @@ sub closed {
 sub aborted {
     my $self = shift;
 
-    if (exists $self->{on_aborted}) {
-        $self->event('aborted');
+    if (exists $self->{on_abort}) {
+        $self->event('abort');
     }
     else {
         $self->event('close');
