@@ -26,7 +26,7 @@ my $root = File::Basename::dirname(__FILE__);
 builder {
     mount '/echo' => SockJS->new(
         handler    => $echo,
-        sockjs_url => '/sockjs-0.3.2.min.js',
+        sockjs_url => '/sockjs-0.3.4.min.js',
         chunked    => $ENV{SOCKJS_CHUNKED}
     );
 

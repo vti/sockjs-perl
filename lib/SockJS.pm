@@ -34,7 +34,7 @@ sub new {
 
     $self->{websocket} = 1 unless defined $params{websocket};
     $self->{chunked}   = 1 unless defined $params{chunked};
-    $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-0.3.2.min.js';
+    $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-0.3.4.min.js';
     $self->{session_factory} ||= sub { SockJS::Session->new };
 
     $self->{sessions} = {};
