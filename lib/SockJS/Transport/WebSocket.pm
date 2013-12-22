@@ -83,13 +83,13 @@ sub _handshake_written_cb {
 
         my $frame = $hs->build_frame;
 
-        my $close_cb = sub {
-            $session->aborted;
-
+        my $abort_cb = sub {
             $handle->close;
+
+            $session->aborted;
         };
-        $handle->on_eof($close_cb);
-        $handle->on_error($close_cb);
+        $handle->on_eof($abort_cb);
+        $handle->on_error($abort_cb);
 
         $handle->on_read(
             sub {
@@ -99,7 +99,7 @@ sub _handshake_written_cb {
                     next unless length $message;
 
                     eval { $message = JSON::decode_json($message) } || do {
-                        $close_cb->();
+                        $abort_cb->();
                         last;
                     };
 
@@ -109,7 +109,9 @@ sub _handshake_written_cb {
                 }
 
                 if ($frame->is_close) {
-                    $close_cb->();
+                    $handle->close;
+
+                    $session->closed;
                 }
             }
         );

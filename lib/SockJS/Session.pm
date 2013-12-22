@@ -81,10 +81,10 @@ sub reconnected {
 sub closed {
     my $self = shift;
 
-    $self->event('close');
-
     $self->{is_connected} = 0;
     $self->{is_closed}    = 1;
+
+    $self->event('close');
 
     return $self;
 }

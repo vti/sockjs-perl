@@ -127,7 +127,6 @@ sub close {
         sub {
             if ($_[0]->fh) {
                 shutdown $_[0]->fh, 1;
-                close $handle->fh;
             }
 
             $_[0]->destroy;
