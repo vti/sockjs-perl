@@ -112,7 +112,7 @@ sub on {
     my $self = shift;
     my ($event, $cb) = @_;
 
-    $self->{"on_$event"} = $cb;
+    push @{$self->{"on_$event"}}, $cb;
 
     return $self;
 }
@@ -166,7 +166,11 @@ sub event {
     my $self  = shift;
     my $event = shift;
 
-    $self->{"on_$event"}->($self, @_) if exists $self->{"on_$event"};
+    if (exists $self->{"on_$event"}) {
+        foreach my $ev (@{$self->{"on_$event"}}) {
+            $ev->($self, @_);
+        }
+    }
 
     return $self;
 }

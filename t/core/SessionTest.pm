@@ -220,6 +220,21 @@ sub fire_abort_event_on_aborted : Test {
     is($written, 'abort');
 }
 
+sub possible_to_set_several_event_handles : Test {
+    my $self = shift;
+
+    my $written = '';
+
+    my $session = $self->_build_session;
+    $session->on('close', sub { $written .= 'close1' });
+    $session->on('close', sub { $written .= 'close2' });
+
+    $session->connected;
+    $session->close;
+
+    is($written, 'close1close2');
+}
+
 sub _build_session {
     my $self = shift;
 
