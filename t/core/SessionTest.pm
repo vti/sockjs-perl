@@ -191,6 +191,20 @@ sub remember_close_message : Test {
     is($written, 'c[1234,"Bye"]c[1234,"Bye"]');
 }
 
+sub fire_close_event_when_abort_not_set : Test {
+    my $self = shift;
+
+    my $written = '';
+
+    my $session = $self->_build_session;
+    $session->on('close', sub { $written .= 'close' });
+
+    $session->connected;
+    $session->aborted;
+
+    is($written, 'close');
+}
+
 sub _build_session {
     my $self = shift;
 
