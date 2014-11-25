@@ -4,6 +4,15 @@ use strict;
 use warnings;
 
 use File::Basename;
+use File::Spec;
+
+my $root;
+
+BEGIN {
+    $root = File::Basename::dirname(__FILE__);
+
+    unshift @INC, File::Spec->catfile($root, '..', 'lib');
+}
 
 use Plack::Builder;
 
@@ -12,16 +21,24 @@ use SockJS;
 my $echo = sub {
     my ($session) = @_;
 
+    warn 'Connected' . "\n";
+
     $session->on(
         'data' => sub {
             my $session = shift;
 
+            warn 'Received "' . join('', @_) . '"' . "\n";
+
+            warn 'Sending back' . "\n";
             $session->write(@_);
+
+            warn 'Disconnecting...' . "\n";
+            $session->close;
         }
     );
-};
 
-my $root = File::Basename::dirname(__FILE__);
+    $session->on(close => sub { warn "Disconnected\n"; });
+};
 
 builder {
     mount '/echo' => SockJS->new(

@@ -15,44 +15,45 @@ sub new {
 
 sub dispatch_POST {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env, $conn) = @_;
 
     return sub {
         my $respond = shift;
 
-        if ($session->is_connected && !$session->is_reconnecting) {
-            $self->_write($env, $session, $respond, 'c[2010,"Another connection still open"]');
+        if ($conn->is_connected && !$conn->is_reconnecting) {
+            $self->_write($env, $respond,
+                'c[2010,"Another connection still open"]');
             return;
         }
 
-        $session->on(
-            syswrite => sub {
-                my $session = shift;
+        $conn->write_cb(
+            sub {
+                my $conn = shift;
                 my ($message) = @_;
 
-                $self->_write($env, $session, $respond, $message);
-                $session->reconnecting;
+                $self->_write($env, $respond, $message);
+                $conn->reconnecting;
             }
         );
 
-        if ($session->is_closed) {
-            $session->connected;
-            $session->close;
+        if ($conn->is_closed) {
+            $conn->connected;
+            $conn->close;
         }
-        elsif ($session->is_connected) {
-            $session->reconnected;
+        elsif ($conn->is_connected) {
+            $conn->reconnected;
         }
         else {
-            $session->syswrite('o');
+            $conn->write('o');
 
-            $session->connected;
+            $conn->connected;
         }
     };
 }
 
 sub _write {
     my $self = shift;
-    my ($env, $session, $respond, $message) = @_;
+    my ($env, $respond, $message) = @_;
 
     $message .= "\n";
 
@@ -62,10 +63,14 @@ sub _write {
     }
 
     $respond->(
-        [   200,
-            [   'Content-Type'   => 'application/javascript; charset=UTF-8',
+        [
+            200,
+            [
+                'Content-Type' => 'application/javascript; charset=UTF-8',
                 'Access-Control-Allow-Origin'      => '*',
                 'Access-Control-Allow-Credentials' => 'true',
+                'Cache-Control' =>
+                  'no-store, no-cache, must-revalidate, max-age=0',
                 @headers
             ],
             [$message]

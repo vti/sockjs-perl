@@ -3,15 +3,19 @@ package SockJS::Session;
 use strict;
 use warnings;
 
-use JSON;
+use JSON ();
+use Encode ();
 
 sub new {
     my $class = shift;
+    my (%params) = @_;
 
-    my $self = {@_};
+    my $self = {};
     bless $self, $class;
 
-    $self->{messages} = [];
+    $self->{id}   = $params{id};
+    $self->{type} = $params{type};
+    $self->{conn} = $params{connection};
 
     return $self;
 }
@@ -34,80 +38,6 @@ sub get {
 
 sub type { $_[0]->{type} }
 
-sub is_connected {
-    my $self = shift;
-
-    return $self->{is_connected};
-}
-
-sub connected {
-    my $self = shift;
-
-    $self->{is_connected}    = 1;
-    $self->{is_reconnecting} = 0;
-    $self->{is_closed}       = 0;
-
-    $self->_send_staged_messages;
-
-    $self->event('connected');
-
-    return $self;
-}
-
-sub reconnecting {
-    my $self = shift;
-
-    $self->{is_reconnecting} = 1;
-
-    return $self;
-}
-
-sub is_reconnecting {
-    my $self = shift;
-
-    return $self->{is_reconnecting};
-}
-
-sub reconnected {
-    my $self = shift;
-
-    $self->{is_reconnecting} = 0;
-
-    $self->_send_staged_messages;
-
-    return $self;
-}
-
-sub closed {
-    my $self = shift;
-
-    $self->{is_connected} = 0;
-    $self->{is_closed}    = 1;
-
-    $self->event('close');
-
-    return $self;
-}
-
-sub aborted {
-    my $self = shift;
-
-    if (exists $self->{on_abort}) {
-        $self->event('abort');
-    }
-    else {
-        $self->event('close');
-    }
-
-    return $self;
-}
-
-sub is_closed {
-    my $self = shift;
-
-    return $self->{is_closed};
-}
-
 sub on {
     my $self = shift;
     my ($event, $cb) = @_;
@@ -120,49 +50,28 @@ sub on {
 sub write {
     my $self = shift;
 
-    my $message = 'a' . JSON::encode_json([@_]);
-
-    return $self->syswrite($message);
-}
-
-sub syswrite {
-    my $self = shift;
-    my ($message) = @_;
-
-    if (($self->is_connected || $self->is_closed)
-        && !$self->is_reconnecting)
-    {
-        $self->event('syswrite', $message);
+    my $message;
+    if (ref $_[0] eq 'SCALAR') {
+        $message = ${$_[0]};
+        $message = Encode::encode('UTF-8', $message) if Encode::is_utf8($message);
     }
     else {
-        push @{$self->{messages}}, $message;
+        $message = 'a' . JSON->new->ascii(1)->encode([@_]) if @_;
     }
 
-    return $self;
+    return $self->{conn}->write($message);
 }
 
 sub close {
     my $self = shift;
     my ($code, $message) = @_;
 
-    $self->{close_message} ||= do {
-        $code    ||= 3000;
-        $message ||= 'Get away!';
-
-        [int $code, $message];
-    };
-
-    $self->syswrite('c['
-          . $self->{close_message}->[0] . ',"'
-          . $self->{close_message}->[1]
-          . '"]');
-
-    $self->closed;
+    $self->{conn}->close($code, $message);
 
     return $self;
 }
 
-sub event {
+sub fire_event {
     my $self  = shift;
     my $event = shift;
 
@@ -173,31 +82,6 @@ sub event {
     }
 
     return $self;
-}
-
-sub _send_staged_messages {
-    my $self = shift;
-
-    while ($self->is_connected
-        && !$self->is_reconnecting
-        && @{$self->{messages}})
-    {
-        my $message = shift @{$self->{messages}};
-        my $type = substr($message, 0, 1);
-
-        if ($type eq 'a') {
-            while ($self->{messages}->[0]
-                && substr($self->{messages}->[0], 0, 1) eq $type)
-            {
-                my $next_message = shift @{$self->{messages}};
-
-                $next_message =~ s{^a\[}{};
-                $message      =~ s{\]}{,$next_message};
-            }
-        }
-
-        $self->event('syswrite', $message);
-    }
 }
 
 1;

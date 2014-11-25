@@ -7,8 +7,9 @@ use base 'SockJS::Transport::Base';
 
 sub new {
     my $self = shift->SUPER::new(@_);
+    my (%params) = @_;
 
-    $self->{response_limit} ||= 128 * 1024;
+    $self->{response_limit} = $params{response_limit} || 128 * 1024;
 
     push @{$self->{allowed_methods}}, 'GET';
 
@@ -17,7 +18,7 @@ sub new {
 
 sub dispatch_GET {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env, $conn) = @_;
 
     my ($callback) = $env->{QUERY_STRING} =~ m/(?:^|&|;)c=([^&;]+)/;
     if (!$callback) {
@@ -35,8 +36,10 @@ sub dispatch_GET {
         my $respond = shift;
 
         my $writer = $respond->(
-            [   200,
-                [   'Content-Type' => 'text/html; charset=UTF-8',
+            [
+                200,
+                [
+                    'Content-Type' => 'text/html; charset=UTF-8',
                     'Connection'   => 'close',
                     'Cache-Control' =>
                       'no-store, no-cache, must-revalidate, max-age=0'
@@ -44,16 +47,17 @@ sub dispatch_GET {
             ]
         );
 
-        if ($session->is_connected && !$session->is_reconnecting) {
+        if ($conn->is_connected && !$conn->is_reconnecting) {
             my $message = $self->_wrap_message(
                 'c[2010,"Another connection still open"]' . "\n");
+            $writer->write($message);
             $writer->close;
             return;
         }
 
-        $session->on(
-            syswrite => sub {
-                my $session = shift;
+        $conn->write_cb(
+            sub {
+                my $conn = shift;
                 my ($message) = @_;
 
                 $limit -= length($message) - 1;
@@ -63,12 +67,12 @@ sub dispatch_GET {
                 if ($limit <= 0) {
                     $writer->close;
 
-                    $session->reconnecting;
+                    $conn->reconnecting;
                 }
             }
         );
 
-        $session->on(close => sub { $writer->close });
+        $conn->close_cb(sub { $writer->close });
 
         $writer->write((' ' x 1024) . <<"EOF");
 <!doctype html>
@@ -85,17 +89,17 @@ sub dispatch_GET {
   </script>
 EOF
 
-        $session->syswrite('o');
+        $conn->write('o');
 
-        if ($session->is_closed) {
-            $session->connected;
-            $session->close;
+        if ($conn->is_closed) {
+            $conn->connected;
+            $conn->close;
         }
-        elsif ($session->is_connected) {
-            $session->reconnected;
+        elsif ($conn->is_connected) {
+            $conn->reconnected;
         }
         else {
-            $session->connected;
+            $conn->connected;
         }
     };
 }

@@ -15,7 +15,7 @@ sub new {
 
 sub dispatch_GET {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env, $conn, $path) = @_;
 
     my ($callback) = $env->{QUERY_STRING} =~ m/(?:^|&|;)c=([^&;]+)/;
     if (!$callback) {
@@ -33,23 +33,24 @@ sub dispatch_GET {
         my $writer = $respond->(
             [   200,
                 [   'Content-Type' => 'application/javascript; charset=UTF-8',
+                    'Connection'   => 'close',
                     'Cache-Control' =>
                       'no-store, no-cache, must-revalidate, max-age=0'
                 ]
             ]
         );
 
-        if ($session->is_connected && !$session->is_reconnecting) {
+        if ($conn->is_connected && !$conn->is_reconnecting) {
             my $message = $self->_wrap_message($callback,
                 'c[2010,"Another connection still open"]' . "\n");
-            $writer->write('');
+            $writer->write($message);
             $writer->close;
             return;
         }
 
-        $session->on(
-            syswrite => sub {
-                my $session = shift;
+        $conn->write_cb(
+            sub {
+                my $conn = shift;
                 my ($message) = @_;
 
                 $message = $self->_wrap_message($callback, $message);
@@ -58,21 +59,21 @@ sub dispatch_GET {
                 $writer->write('');
                 $writer->close;
 
-                $session->reconnecting if $session->is_connected;
+                $conn->reconnecting if $conn->is_connected;
             }
         );
 
-        if ($session->is_closed) {
-            $session->connected;
-            $session->close;
+        if ($conn->is_closed) {
+            $conn->connected;
+            $conn->close;
         }
-        elsif ($session->is_connected) {
-            $session->reconnected;
+        elsif ($conn->is_connected) {
+            $conn->reconnected;
         }
         else {
-            $session->syswrite('o');
+            $conn->write('o');
 
-            $session->connected;
+            $conn->connected;
         }
     };
 }

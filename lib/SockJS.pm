@@ -16,6 +16,7 @@ use SockJS::Middleware::Http10;
 use SockJS::Middleware::JSessionID;
 use SockJS::Transport;
 use SockJS::Session;
+use SockJS::Connection;
 
 sub new {
     my $class = shift;
@@ -31,13 +32,14 @@ sub new {
     $self->{chunked}         = $params{chunked};
     $self->{sockjs_url}      = $params{sockjs_url};
     $self->{session_factory} = $params{session_factory};
+    $self->{response_limit}  = $params{response_limit};
 
     $self->{websocket} = 1 unless defined $params{websocket};
     $self->{chunked}   = 1 unless defined $params{chunked};
     $self->{sockjs_url} ||= 'http://cdn.sockjs.org/sockjs-0.3.4.min.js';
-    $self->{session_factory} ||= sub { SockJS::Session->new };
+    $self->{session_factory} ||= sub { shift; SockJS::Session->new(@_) };
 
-    $self->{sessions} = {};
+    $self->{connections} = {};
 
     return $self;
 }
@@ -48,7 +50,7 @@ sub to_app {
     my $app = sub { $self->call(@_) };
 
     $app = SockJS::Middleware::Http10->new->wrap($app);
-    $app = Plack::Middleware::Chunked->new->wrap($app) if $self->{chunked};
+    #$app = Plack::Middleware::Chunked->new->wrap($app) if $self->{chunked};
     $app =
       SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
       ->wrap($app);
@@ -71,6 +73,11 @@ sub call {
 
         return $self->_dispatch_transport($env, $session_id, $transport);
     }
+    elsif ($path_info =~ m{^/websocket$}) {
+        my ($session_id, $transport) = ('raw', 'raw_websocket');
+
+        return $self->_dispatch_transport($env, $session_id, $transport);
+    }
     elsif ($path_info eq '/info') {
         return $self->_dispatch_info($env);
     }
@@ -85,9 +92,15 @@ sub _dispatch_welcome_page {
     my $self = shift;
     my ($env) = @_;
 
+    my $message = "Welcome to SockJS!\n";
+
     return [
-        200, ['Content-Type' => 'text/plain; charset=UTF-8',],
-        ["Welcome to SockJS!\n"]
+        200,
+        [
+            'Content-Type'   => 'text/plain; charset=UTF-8',
+            'Content-Length' => length($message)
+        ],
+        [$message]
     ];
 }
 
@@ -103,45 +116,52 @@ sub _dispatch_transport {
 
     $env->{'sockjs.transport'} = $transport->name;
 
-    my $session = $self->{sessions}->{$id};
+    my $conn = $self->{connections}->{$id};
 
-    if (!$session || $transport->name eq 'websocket') {
-        $session = $self->{session_factory}->($self, $id);
+    if (!$conn || $transport->name =~ m/websocket/) {
+        $conn = SockJS::Connection->new(type => $transport->name);
 
-        if ($transport->name eq 'websocket') {
-            push @{$self->{sessions}->{$id}}, $session;
+        if ($transport->name =~ m/websocket/) {
+            push @{$self->{connections}->{$id}}, $conn;
         }
         else {
-            $self->{sessions}->{$id} = $session;
+            $self->{connections}->{$id} = $conn;
         }
 
-        $session->on(
-            connected => sub {
-                my $session = shift;
+        my $session =
+          $self->{session_factory}
+          ->($self, id => $id, connection => $conn, type => $transport->name);
 
-                $self->{handler}->($session);
-            }
-        );
+        my $close_timer;
+        $conn->on(connect => sub { $self->{handler}->($session); });
+        $conn->on(data => sub { shift; $session->fire_event(data => @_) });
+        $conn->on(
+            close => sub {
+                my $conn = shift;
 
-        $session->on(
-            aborted => sub {
-                my $session = shift;
+                $session->fire_event(close => @_);
 
-                if (ref $self->{sessions}->{$id} eq 'ARRAY') {
-                    $self->{sessions}->{$id} =
-                      [grep { "$_" ne "$session" } @{$self->{sessions}->{$id}}];
-                    delete $self->{sessions}->{$id}
-                      unless @{$self->{sessions}->{$id}};
-                }
-                else {
-                    delete $self->{sessions}->{$id};
-                }
+                $close_timer = AnyEvent->timer(
+                    after => .5,
+                    cb    => sub {
+                        if (ref $self->{connections}->{$id} eq 'ARRAY') {
+                            $self->{connections}->{$id} =
+                              [grep { "$_" ne "$conn" }
+                                  @{$self->{connections}->{$id}}];
+                            delete $self->{connections}->{$id}
+                              unless @{$self->{connections}->{$id}};
+                        }
+                        else {
+                            delete $self->{connections}->{$id};
+                        }
+                    }
+                );
             }
         );
     }
 
     my $response;
-    eval { $response = $transport->dispatch($env, $session, $path) } || do {
+    eval { $response = $transport->dispatch($env, $conn) } || do {
         my $e = $@;
 
         warn $e;
@@ -153,7 +173,14 @@ sub _dispatch_transport {
             $error = $e->message;
         }
 
-        $response = [$code, [], [$error]];
+        $response = [
+            $code,
+            [
+                'Content-Type'   => 'text/plain; charset=UTF-8',
+                'Content-Length' => length($error),
+            ],
+            [$error]
+        ];
     };
 
     return $response;
@@ -202,6 +229,7 @@ sub _dispatch_info {
             'Content-Type'  => 'application/json; charset=UTF-8',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Access-Control-Allow-Headers' => 'origin, content-type',
+            'Content-Length' => length($info),
             @cors_headers
         ],
         [$info]
@@ -249,10 +277,11 @@ EOF
     return [
         200,
         [
-            'Content-Type'  => 'text/html; charset=UTF-8',
-            'Expires'       => '31536000',
-            'Cache-Control' => 'public;max-age=31536000',
-            'Etag'          => Digest::MD5::md5_hex($body),
+            'Content-Type'   => 'text/html; charset=UTF-8',
+            'Expires'        => '31536000',
+            'Cache-Control'  => 'public;max-age=31536000',
+            'Etag'           => Digest::MD5::md5_hex($body),
+            'Content-Length' => length($body),
             @cors_headers
         ],
         [$body]

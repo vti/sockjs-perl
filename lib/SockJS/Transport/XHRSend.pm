@@ -5,7 +5,7 @@ use warnings;
 
 use base 'SockJS::Transport::Base';
 
-use SockJS::Exception;
+use JSON ();
 
 sub new {
     my $self = shift->SUPER::new(@_);
@@ -22,16 +22,17 @@ sub dispatch_POST {
     return [404, [], ['Not found']] unless $session->is_connected;
 
     my $data = $self->_get_content($env);
+    return $data if $data && ref $data eq 'ARRAY';
 
-    return $self->_return_send_error('Payload expected.') unless length $data;
+    return $self->_return_error('Payload expected.') unless length $data;
 
     my $message;
     eval { $message = JSON::decode_json($data) } || do {
-        return $self->_return_send_error('Broken JSON encoding.');
+        return $self->_return_error('Broken JSON encoding.');
     };
 
-    if (@$message) {
-        $session->event('data', @$message);
+    if ($message && ref $message eq 'ARRAY') {
+        $session->fire_event('data', @$message);
     }
 
     my $origin       = $env->{HTTP_ORIGIN};
@@ -43,8 +44,10 @@ sub dispatch_POST {
 
     return [
         204,
-        [   'Content-Type'                 => 'text/plain; charset=UTF-8',
+        [
+            'Content-Type'                 => 'text/plain; charset=UTF-8',
             'Access-Control-Allow-Headers' => 'origin, content-type',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             @cors_headers
         ],
         []
@@ -58,16 +61,9 @@ sub _get_content {
     my $content_length = $env->{CONTENT_LENGTH} || 0;
     my $rcount = $env->{'psgi.input'}->read(my $chunk, $content_length);
 
-    SockJS::Exception->throw(500) unless $rcount == $content_length;
+    return $self->_return_error('System error') unless $rcount == $content_length;
 
     return $chunk;
-}
-
-sub _return_send_error {
-    my $self = shift;
-    my ($error) = @_;
-
-    return [500, ['Content-Type' => 'text/plain; charset=UTF-8'], [$error]];
 }
 
 1;

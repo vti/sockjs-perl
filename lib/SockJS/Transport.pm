@@ -33,7 +33,7 @@ sub build {
     elsif ($path eq 'jsonp_send') {
         $class = 'JSONPSend';
     }
-    elsif ($path eq 'websocket') {
+    elsif ($path eq 'websocket' || $path eq 'raw_websocket') {
         $class = 'WebSocket';
     }
     elsif ($path eq 'eventsource') {

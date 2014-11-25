@@ -7,8 +7,9 @@ use base 'SockJS::Transport::Base';
 
 sub new {
     my $self = shift->SUPER::new(@_);
+    my (%params) = @_;
 
-    $self->{response_limit} ||= 128 * 1024;
+    $self->{response_limit} = $params{response_limit} || 128 * 1024;
 
     push @{$self->{allowed_methods}}, 'POST';
 
@@ -17,7 +18,7 @@ sub new {
 
 sub dispatch_POST {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env, $conn) = @_;
 
     my $limit = $self->{response_limit};
 
@@ -34,28 +35,24 @@ sub dispatch_POST {
         my $writer = $respond->(
             [   200,
                 [   'Content-Type' => 'application/javascript; charset=UTF-8',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
                     @cors_headers
                 ]
             ]
         );
 
-        if ($session->is_connected && !$session->is_reconnecting) {
-            $writer->write(('h' x 2048) . "\n");
+        $writer->write(('h' x 2048) . "\n");
+
+        if ($conn->is_connected && !$conn->is_reconnecting) {
             $writer->write('c[2010,"Another connection still open"]' . "\n");
             $writer->write('');
             $writer->close;
             return;
         }
 
-        #my $handle = SockJS::Handle->new(fh => $env->{'psgix.io'});
-        #$handle->on_error(sub { $session->aborted });
-        #$handle->on_eof(sub   { $session->aborted });
-
-        $writer->write(('h' x 2048) . "\n");
-
-        $session->on(
-            syswrite => sub {
-                my $session = shift;
+        $conn->write_cb(
+            sub {
+                my $conn = shift;
                 my ($message) = @_;
 
                 $writer->write($message . "\n");
@@ -65,34 +62,33 @@ sub dispatch_POST {
                 if ($limit <= 0) {
                     $writer->write('');
                     $writer->close;
-                    $session->reconnecting;
+
+                    $conn->reconnecting;
                 }
             }
         );
 
-        $session->on(
-            close => sub {
-                my $session = shift;
+        $conn->close_cb(
+            sub {
+                my $conn = shift;
 
                 $writer->write('');
                 $writer->close;
             }
         );
 
-        if ($session->is_closed) {
-            $session->connected;
-            $session->close;
+        if ($conn->is_closed) {
+            $conn->connected;
+            $conn->close;
+        }
+        elsif ($conn->is_connected) {
+            $conn->reconnected;
         }
         else {
-            if ($session->is_connected) {
-                $session->reconnected;
-            }
-            else {
-                $limit -= 4;
-                $session->syswrite('o');
+            $limit -= 4;
+            $conn->write('o');
 
-                $session->connected;
-            }
+            $conn->connected;
         }
     };
 }

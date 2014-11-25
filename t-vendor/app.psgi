@@ -8,6 +8,12 @@ use File::Basename;
 use Plack::Builder;
 use Plack::App::Directory;
 
+BEGIN {
+    my $root = File::Basename::dirname(__FILE__);
+
+    unshift @INC, File::Spec->catfile($root, '..', 'lib');
+}
+
 use SockJS;
 
 my %options = (

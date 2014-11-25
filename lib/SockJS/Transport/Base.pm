@@ -5,10 +5,12 @@ use warnings;
 
 sub new {
     my $class = shift;
+    my (%params) = @_;
 
-    my $self = {@_};
+    my $self = {};
     bless $self, $class;
 
+    $self->{name} = $params{name} || '';
     $self->{allowed_methods} = ['OPTIONS'];
 
     return $self;
@@ -18,11 +20,14 @@ sub name { shift->{name} }
 
 sub dispatch {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env) = @_;
 
     my $method = $env->{REQUEST_METHOD};
     if (!grep { $_ eq $method } @{$self->{allowed_methods}}) {
-        return [400, [], ['Bad request']];
+        return [
+            405, ['Allow' => join ', ', @{$self->{allowed_methods}}],
+            ['']
+        ];
     }
 
     $method = "dispatch_$method";
@@ -31,7 +36,7 @@ sub dispatch {
 
 sub dispatch_OPTIONS {
     my $self = shift;
-    my ($env, $session, $path) = @_;
+    my ($env) = @_;
 
     my $origin       = $env->{HTTP_ORIGIN};
     my @cors_headers = (
@@ -51,6 +56,21 @@ sub dispatch_OPTIONS {
             @cors_headers
         ],
         ['']
+    ];
+}
+
+sub _return_error {
+    my $self = shift;
+    my ($error, %params) = @_;
+
+    return [
+        $params{status} || 500,
+        [
+            'Content-Type'   => 'text/plain; charset=UTF-8',
+            'Content-Length' => length($error),
+            $params{headers} ? @{$params{headers}} : ()
+        ],
+        [$error]
     ];
 }
 
