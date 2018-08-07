@@ -16,13 +16,13 @@ sub call {
     $self->response_cb(
         $res => sub {
             my $res = shift;
-            my $h   = Plack::Util::headers($res->[1]);
+            my $h   = Plack::Util::headers( $res->[1] );
 
-            if (    $env->{'SERVER_PROTOCOL'} eq 'HTTP/1.0'
-                and !$h->exists('Content-Length')
-                and !$h->exists('Connection'))
+            if (   $env->{'SERVER_PROTOCOL'} eq 'HTTP/1.0'
+                && !$h->exists('Content-Length')
+                && !$h->exists('Connection') )
             {
-                $h->set('Connection' => 'close');
+                $h->set( 'Connection' => 'close' );
                 return;
             }
         }
