@@ -34,8 +34,6 @@ sub dispatch_GET {
             [   200,
                 [   'Content-Type' => 'application/javascript; charset=UTF-8',
                     'Connection'   => 'close',
-                    'Cache-Control' =>
-                      'no-store, no-cache, must-revalidate, max-age=0'
                 ]
             ]
         );
@@ -83,7 +81,7 @@ sub _wrap_message {
     my ($callback, $message) = @_;
 
     $message =~ s/(['""\\\/\n\r\t]{1})/\\$1/smg;
-    $message = qq{$callback("$message");\r\n};
+    $message = qq{/**/$callback("$message");\r\n};
 
     return $message;
 }

@@ -35,23 +35,7 @@ sub dispatch_POST {
         $session->fire_event('data', @$message);
     }
 
-    my $origin       = $env->{HTTP_ORIGIN};
-    my @cors_headers = (
-        'Access-Control-Allow-Origin' => !$origin
-          || $origin eq 'null' ? '*' : $origin,
-        'Access-Control-Allow-Credentials' => 'true'
-    );
-
-    return [
-        204,
-        [
-            'Content-Type'                 => 'text/plain; charset=UTF-8',
-            'Access-Control-Allow-Headers' => 'origin, content-type',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            @cors_headers
-        ],
-        []
-    ];
+    return [ 204, [ 'Content-Type' => 'text/plain; charset=UTF-8' ], [] ];
 }
 
 sub _get_content {

@@ -41,8 +41,6 @@ sub dispatch_GET {
                 [
                     'Content-Type' => 'text/html; charset=UTF-8',
                     'Connection'   => 'close',
-                    'Cache-Control' =>
-                      'no-store, no-cache, must-revalidate, max-age=0'
                 ]
             ]
         );
@@ -74,7 +72,7 @@ sub dispatch_GET {
 
         $conn->close_cb(sub { $writer->close });
 
-        $writer->write((' ' x 1024) . <<"EOF");
+        $writer->write(<<"EOF" . (' ' x 1024));
 <!doctype html>
 <html><head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -82,7 +80,7 @@ sub dispatch_GET {
 </head><body><h2>Don't panic!</h2>
   <script>
     document.domain = document.domain;
-    var c = parent.$callback;
+    var c = parent.callback;
     c.start();
     function p(d) {c.message(d);};
     window.onload = function() {c.stop();};

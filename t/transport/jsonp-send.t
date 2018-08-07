@@ -153,11 +153,8 @@ subtest 'return correct response' => sub {
       [
         200,
         [
-            'Content-Type'=>                     'text/plain; charset=UTF-8',
-            'Content-Length'=>                   2,
-            'Access-Control-Allow-Origin'=>      '*',
-            'Access-Control-Allow-Credentials'=> 'true',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Content-Type'   => 'text/plain; charset=UTF-8',
+            'Content-Length' => 2,
         ],
         ['ok']
       ];

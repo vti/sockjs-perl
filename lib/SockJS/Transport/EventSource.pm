@@ -25,14 +25,8 @@ sub dispatch_GET {
     return sub {
         my $respond = shift;
 
-        my $writer = $respond->(
-            [   200,
-                [   'Content-Type' => 'text/event-stream; charset=UTF-8',
-                    'Cache-Control' =>
-                      'no-store, no-cache, must-revalidate, max-age=0'
-                ]
-            ]
-        );
+        my $writer =
+          $respond->( [ 200, [ 'Content-Type' => 'text/event-stream', ] ] );
 
         if ($conn->is_connected && !$conn->is_reconnecting) {
             $writer->write("\x0d\x0a");

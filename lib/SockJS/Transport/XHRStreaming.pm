@@ -25,19 +25,10 @@ sub dispatch_POST {
     return sub {
         my $respond = shift;
 
-        my $origin       = $env->{HTTP_ORIGIN};
-        my @cors_headers = (
-            'Access-Control-Allow-Origin' => !$origin
-              || $origin eq 'null' ? '*' : $origin,
-            'Access-Control-Allow-Credentials' => 'true'
-        );
-
         my $writer = $respond->(
-            [   200,
-                [   'Content-Type' => 'application/javascript; charset=UTF-8',
-                    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-                    @cors_headers
-                ]
+            [
+                200,
+                [ 'Content-Type' => 'application/javascript; charset=UTF-8' ]
             ]
         );
 

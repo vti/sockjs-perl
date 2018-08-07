@@ -136,7 +136,7 @@ sub _parse {
     while (defined(my $message = $frame->next_bytes)) {
         next unless length $message;
 
-        if ($frame->rsv->[0]) {
+        if ($frame->rsv && $frame->rsv->[0]) {
             my $uncompressed;
 
             $message .= "\x00\x00\xff\xff";
@@ -148,7 +148,7 @@ sub _parse {
 
         if ($self->name eq 'websocket') {
             eval { $message = JSON::decode_json($message) } || do {
-                warn "JSON error: $@\n";
+                #warn "JSON error: $@\n";
                 return;
             };
 

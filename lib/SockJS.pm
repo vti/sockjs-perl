@@ -14,6 +14,8 @@ use Scalar::Util ();
 use Plack::Middleware::Chunked;
 use SockJS::Middleware::Http10;
 use SockJS::Middleware::JSessionID;
+use SockJS::Middleware::Cors;
+use SockJS::Middleware::Cache;
 use SockJS::Transport;
 use SockJS::Session;
 use SockJS::Connection;
@@ -50,10 +52,12 @@ sub to_app {
     my $app = sub { $self->call(@_) };
 
     $app = SockJS::Middleware::Http10->new->wrap($app);
-    #$app = Plack::Middleware::Chunked->new->wrap($app) if $self->{chunked};
+    $app = Plack::Middleware::Chunked->new->wrap($app) if $self->{chunked};
     $app =
-      SockJS::Middleware::JSessionID->new(cookie => $self->{cookie})
+      SockJS::Middleware::JSessionID->new( cookie => $self->{cookie} )
       ->wrap($app);
+    $app = SockJS::Middleware::Cors->new->wrap($app);
+    $app = SockJS::Middleware::Cache->new->wrap($app);
 
     return $app;
 }
@@ -85,7 +89,7 @@ sub call {
         return $self->_dispatch_iframe($env);
     }
 
-    return [404, [], ['Not found']];
+    return [404, ['Content-Length' => 9], ['Not found']];
 }
 
 sub _dispatch_welcome_page {
@@ -190,26 +194,12 @@ sub _dispatch_info {
     my $self = shift;
     my ($env) = @_;
 
-    my $origin = $env->{HTTP_ORIGIN};
-
-    my @cors_headers = (
-        'Access-Control-Allow-Origin' => !$origin
-          || $origin eq 'null' ? '*' : $origin,
-        'Access-Control-Allow-Credentials' => 'true'
-    );
+    $env->{'sockjs.allowed_methods'} = [qw/OPTIONS GET/];
 
     if ($env->{REQUEST_METHOD} eq 'OPTIONS') {
-        return [
-            204,
-            [
-                'Expires'                      => '31536000',
-                'Cache-Control'                => 'public;max-age=31536000',
-                'Access-Control-Allow-Methods' => 'OPTIONS, GET',
-                'Access-Control-Max-Age'       => '31536000',
-                @cors_headers
-            ],
-            []
-        ];
+        $env->{'sockjs.cacheable'} = 1;
+
+        return [ 204, [], [] ];
     }
 
     my $info = JSON::encode_json(
@@ -227,10 +217,7 @@ sub _dispatch_info {
         200,
         [
             'Content-Type'  => 'application/json; charset=UTF-8',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            'Access-Control-Allow-Headers' => 'origin, content-type',
             'Content-Length' => length($info),
-            @cors_headers
         ],
         [$info]
     ];
@@ -247,11 +234,11 @@ sub _dispatch_iframe {
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="$sockjs_url"></script>
   <script>
     document.domain = document.domain;
-    _sockjs_onload = function(){SockJS.bootstrap_iframe();};
+    SockJS.bootstrap_iframe();
   </script>
-  <script src="$sockjs_url"></script>
 </head>
 <body>
   <h2>Don't panic!</h2>
@@ -268,21 +255,14 @@ EOF
         }
     }
 
-    my $origin       = $env->{HTTP_ORIGIN};
-    my @cors_headers = (
-        'Access-Control-Allow-Origin' => !$origin
-          || $origin eq 'null' ? '*' : $origin,
-        'Access-Control-Allow-Credentials' => 'true'
-    );
+    $env->{'sockjs.cacheable'} = 1;
+
     return [
         200,
         [
             'Content-Type'   => 'text/html; charset=UTF-8',
-            'Expires'        => '31536000',
-            'Cache-Control'  => 'public;max-age=31536000',
             'Etag'           => Digest::MD5::md5_hex($body),
             'Content-Length' => length($body),
-            @cors_headers
         ],
         [$body]
     ];

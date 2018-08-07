@@ -125,17 +125,7 @@ subtest 'return correct response' => sub {
     );
 
     is_deeply $res,
-      [
-        204,
-        [
-            'Content-Type'                 => 'text/plain; charset=UTF-8',
-            'Access-Control-Allow-Headers' => 'origin, content-type',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            'Access-Control-Allow-Origin'      => '*',
-            'Access-Control-Allow-Credentials' => 'true',
-        ],
-        []
-      ];
+      [ 204, [ 'Content-Type' => 'text/plain; charset=UTF-8', ], [] ];
 };
 
 done_testing;

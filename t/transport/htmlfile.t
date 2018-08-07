@@ -42,9 +42,8 @@ subtest 'write correct headers' => sub {
       [
         200,
         [
-            'Content-Type', 'text/html; charset=UTF-8',
-            'Connection'    => 'close',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0'
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Connection'   => 'close',
         ]
       ];
 };

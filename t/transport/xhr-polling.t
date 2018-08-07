@@ -22,13 +22,7 @@ subtest 'return error when connection already open' => sub {
       [
         [
             200,
-            [
-                'Content-Type' => 'application/javascript; charset=UTF-8',
-                'Access-Control-Allow-Origin'      => '*',
-                'Access-Control-Allow-Credentials' => 'true',
-                'Cache-Control' =>
-                  'no-store, no-cache, must-revalidate, max-age=0'
-            ],
+            [ 'Content-Type' => 'application/javascript; charset=UTF-8', ],
             [qq{c[2010,"Another connection still open"]\n}]
         ]
       ];
@@ -46,14 +40,7 @@ subtest 'write on connect' => sub {
     is_deeply \@written,
       [
         [
-            200,
-            [
-                'Content-Type' => 'application/javascript; charset=UTF-8',
-                'Access-Control-Allow-Origin'      => '*',
-                'Access-Control-Allow-Credentials' => 'true',
-                'Cache-Control' =>
-                  'no-store, no-cache, must-revalidate, max-age=0'
-            ],
+            200, [ 'Content-Type' => 'application/javascript; charset=UTF-8', ],
             [qq{o\n}]
         ]
       ];

@@ -22,12 +22,13 @@ sub dispatch {
     my $self = shift;
     my ($env) = @_;
 
+    $env->{'sockjs.cacheable'}       = $self->{cacheable};
+    $env->{'sockjs.allowed_methods'} = $self->{allowed_methods};
+
     my $method = $env->{REQUEST_METHOD};
-    if (!grep { $_ eq $method } @{$self->{allowed_methods}}) {
-        return [
-            405, ['Allow' => join ', ', @{$self->{allowed_methods}}],
-            ['']
-        ];
+    if ( !grep { $_ eq $method } @{ $self->{allowed_methods} } ) {
+        return [ 405, [ 'Allow' => join ', ', @{ $self->{allowed_methods} } ],
+            [''] ];
     }
 
     $method = "dispatch_$method";
@@ -38,37 +39,21 @@ sub dispatch_OPTIONS {
     my $self = shift;
     my ($env) = @_;
 
-    my $origin       = $env->{HTTP_ORIGIN};
-    my @cors_headers = (
-        'Access-Control-Allow-Origin' => !$origin
-          || $origin eq 'null' ? '*' : $origin,
-        'Access-Control-Allow-Credentials' => 'true'
-    );
+    $env->{'sockjs.cacheable'} = 1;
 
-    return [
-        204,
-        [   'Expires'       => '31536000',
-            'Cache-Control' => 'public;max-age=31536000',
-            'Access-Control-Allow-Methods' =>
-              join(', ', @{$self->{allowed_methods}}),
-            'Access-Control-Max-Age'       => '31536000',
-            'Access-Control-Allow-Headers' => 'origin, content-type',
-            @cors_headers
-        ],
-        ['']
-    ];
+    return [ 204, [], [''] ];
 }
 
 sub _return_error {
     my $self = shift;
-    my ($error, %params) = @_;
+    my ( $error, %params ) = @_;
 
     return [
         $params{status} || 500,
         [
             'Content-Type'   => 'text/plain; charset=UTF-8',
             'Content-Length' => length($error),
-            $params{headers} ? @{$params{headers}} : ()
+            $params{headers} ? @{ $params{headers} } : ()
         ],
         [$error]
     ];

@@ -57,22 +57,9 @@ sub _write {
 
     $message .= "\n";
 
-    my @headers;
-    if (my $headers = $env->{HTTP_ACCESS_CONTROL_REQUEST_HEADERS}) {
-        push @headers, 'Access-Control-Allow-Headers', $headers;
-    }
-
     $respond->(
         [
-            200,
-            [
-                'Content-Type' => 'application/javascript; charset=UTF-8',
-                'Access-Control-Allow-Origin'      => '*',
-                'Access-Control-Allow-Credentials' => 'true',
-                'Cache-Control' =>
-                  'no-store, no-cache, must-revalidate, max-age=0',
-                @headers
-            ],
+            200, [ 'Content-Type' => 'application/javascript; charset=UTF-8', ],
             [$message]
         ]
     );

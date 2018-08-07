@@ -24,20 +24,7 @@ subtest 'dispatch options' => sub {
 
     my $res = $transport->dispatch({REQUEST_METHOD => 'OPTIONS'});
 
-    is_deeply $res,
-      [
-        204,
-        [
-            'Expires',                          '31536000',
-            'Cache-Control',                    'public;max-age=31536000',
-            'Access-Control-Allow-Methods',     'OPTIONS, GET',
-            'Access-Control-Max-Age',           '31536000',
-            'Access-Control-Allow-Headers',     'origin, content-type',
-            'Access-Control-Allow-Origin',      '*',
-            'Access-Control-Allow-Credentials', 'true'
-        ],
-        ['']
-      ];
+    is_deeply $res, [ 204, [], [''] ];
 };
 
 subtest 'dispatch allowed method' => sub {
