@@ -2,6 +2,13 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.06 2018-08-26T18:25:58Z
+
+ - use IO::String in tests for more compatibility with older perls
+ - add more test dependencies
+ - add Build.PL to make it installable from git
+ - add travis
+
 0.05 2018-08-26T17:55:24Z
 
  - do not use 5.10 features

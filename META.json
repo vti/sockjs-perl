@@ -43,9 +43,11 @@
       "runtime" : {
          "requires" : {
             "AnyEvent" : "0",
+            "IO::String" : "0",
             "JSON" : "0",
             "Plack" : "0",
             "Protocol::WebSocket" : "0",
+            "Test::Fatal" : "0",
             "Test::MonkeyMock" : "0",
             "Test::More" : "0"
          }
@@ -63,7 +65,7 @@
          "web" : "https://github.com/vti/sockjs-perl"
       }
    },
-   "version" : "0.05",
+   "version" : "0.06",
    "x_contributors" : [
       "BlueT - Matthew Lien - 練喆明 <BlueT@BlueT.org>",
       "vti <viacheslav.t@gmail.com>"
