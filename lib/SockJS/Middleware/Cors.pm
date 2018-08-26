@@ -19,7 +19,8 @@ sub call {
 
             my $h = Plack::Util::headers( $res->[1] );
 
-            my $origin = $env->{HTTP_ORIGIN} // '';
+            my $origin = $env->{HTTP_ORIGIN};
+            $origin = '' unless defined $origin;
 
             my %cors_headers = (
                   'Access-Control-Allow-Origin' => ( $origin eq '' )
