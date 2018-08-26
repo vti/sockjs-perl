@@ -103,7 +103,7 @@ sub _parse {
 
                     my $bytes = $hs->build_frame(buffer => $message)->to_bytes;
 
-                    $handle->push_write($bytes);
+                    $handle->push_write($bytes) if $handle;
                 }
             );
             $conn->close_cb(
@@ -113,10 +113,12 @@ sub _parse {
                     my $close_frame = $hs->build_frame(type => 'close')->to_bytes;
                     $conn->write($close_frame);
 
-                    $handle->push_shutdown;
-                    $handle->destroy;
-                    delete $self->{handle};
-                    undef $handle;
+                    if ($handle) {
+                        $handle->push_shutdown;
+                        $handle->destroy;
+                        delete $self->{handle};
+                        undef $handle;
+                    }
                 }
             );
 
