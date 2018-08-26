@@ -61,7 +61,7 @@
          "web" : "https://github.com/vti/sockjs-perl"
       }
    },
-   "version" : "0.03",
+   "version" : "0.04",
    "x_contributors" : [
       "BlueT - Matthew Lien - 練喆明 <BlueT@BlueT.org>",
       "vti <viacheslav.t@gmail.com>"

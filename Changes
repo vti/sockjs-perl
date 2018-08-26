@@ -2,6 +2,11 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.04 2018-08-26T12:24:41Z
+
+ - set license (manwar)
+ - make sure handler object exists in websocket callbacks
+
 0.03 2018-08-26T06:25:23Z
 
  - upgrade to SockJS 1.* version
