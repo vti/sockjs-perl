@@ -2,6 +2,11 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.05 2018-08-26T17:55:24Z
+
+ - do not use 5.10 features
+ - add test dependencies
+
 0.04 2018-08-26T12:24:41Z
 
  - set license (manwar)
