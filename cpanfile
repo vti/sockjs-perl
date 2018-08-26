@@ -1,3 +1,4 @@
+requires 'IO::String';
 requires 'Plack';
 requires 'JSON';
 requires 'AnyEvent';

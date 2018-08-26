@@ -3,6 +3,7 @@ use warnings;
 
 use Test::More;
 
+use IO::String;
 use SockJS::Connection;
 use SockJS::Transport::JSONPSend;
 
@@ -11,9 +12,9 @@ subtest 'return error when not connected' => sub {
 
     my $conn = _build_conn();
 
-    my $res = $transport->dispatch({REQUEST_METHOD => 'POST'}, $conn);
+    my $res = $transport->dispatch( { REQUEST_METHOD => 'POST' }, $conn );
 
-    is_deeply $res, [404, [], ['Not found']];
+    is_deeply $res, [ 404, [], ['Not found'] ];
 };
 
 subtest 'return error when content length not equals actual read data' => sub {
@@ -24,17 +25,21 @@ subtest 'return error when content length not equals actual read data' => sub {
     $conn->connected;
 
     my $input = 'foobar';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
-        {REQUEST_METHOD => 'POST', CONTENT_LENGTH => 100, 'psgi.input' => $fh},
+        {
+            REQUEST_METHOD => 'POST',
+            CONTENT_LENGTH => 100,
+            'psgi.input'   => $fh
+        },
         $conn
     );
 
     is_deeply $res,
       [
         500,
-        ['Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 12],
+        [ 'Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 12 ],
         ['System error']
       ];
 };
@@ -47,15 +52,17 @@ subtest 'return error when no payload' => sub {
     $conn->connected;
 
     my $input = '';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
-        {REQUEST_METHOD => 'POST', CONTENT_LENGTH => 0, 'psgi.input' => $fh},
-        $conn);
+        { REQUEST_METHOD => 'POST', CONTENT_LENGTH => 0, 'psgi.input' => $fh },
+        $conn
+    );
 
     is_deeply $res,
       [
-        500, ['Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 17],
+        500,
+        [ 'Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 17 ],
         ['Payload expected.']
       ];
 };
@@ -68,15 +75,17 @@ subtest 'return error when broken JSON' => sub {
     $conn->connected;
 
     my $input = '123';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
-        {REQUEST_METHOD => 'POST', CONTENT_LENGTH => 3, 'psgi.input' => $fh},
-        $conn);
+        { REQUEST_METHOD => 'POST', CONTENT_LENGTH => 3, 'psgi.input' => $fh },
+        $conn
+    );
 
     is_deeply $res,
       [
-        500, ['Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 21],
+        500,
+        [ 'Content-Type', 'text/plain; charset=UTF-8', 'Content-Length' => 21 ],
         ['Broken JSON encoding.']
       ];
 };
@@ -88,10 +97,10 @@ subtest 'call on data with simple POST' => sub {
 
     my @data;
     $conn->connected;
-    $conn->on(data => sub { shift; @data = @_ });
+    $conn->on( data => sub { shift; @data = @_ } );
 
     my $input = '[{"foo":"bar"}]';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
         {
@@ -102,7 +111,7 @@ subtest 'call on data with simple POST' => sub {
         $conn
     );
 
-    is_deeply \@data, [{foo => 'bar'}];
+    is_deeply \@data, [ { foo => 'bar' } ];
 };
 
 subtest 'call on data with form POST' => sub {
@@ -112,10 +121,10 @@ subtest 'call on data with form POST' => sub {
 
     my @data;
     $conn->connected;
-    $conn->on(data => sub { shift; @data = @_ });
+    $conn->on( data => sub { shift; @data = @_ } );
 
     my $input = 'd=[{"foo":"bar"}]';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
         {
@@ -127,7 +136,7 @@ subtest 'call on data with form POST' => sub {
         $conn
     );
 
-    is_deeply \@data, [{foo => 'bar'}];
+    is_deeply \@data, [ { foo => 'bar' } ];
 };
 
 subtest 'return correct response' => sub {
@@ -138,7 +147,7 @@ subtest 'return correct response' => sub {
     $conn->connected;
 
     my $input = '[{"foo":"bar"}]';
-    open my $fh, '<', \$input;
+    my $fh    = IO::String->new($input);
 
     my $res = $transport->dispatch(
         {
