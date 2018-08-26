@@ -1,5 +1,9 @@
 Revision history for perl module SockJS
 
+{{$NEXT}}
+
+ - upgrade to SockJS 1.* version
+
 0.01 2013-04-06
 
  - Initial release

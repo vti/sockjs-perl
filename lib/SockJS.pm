@@ -3,7 +3,7 @@ package SockJS;
 use strict;
 use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use overload '&{}' => sub { shift->to_app(@_) }, fallback => 1;
 
@@ -323,7 +323,7 @@ Viacheslav Tykhanovskyi, C<vti@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2013, Viacheslav Tykhanovskyi
+Copyright (C) 2013-2018, Viacheslav Tykhanovskyi
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.

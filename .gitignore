@@ -2,3 +2,5 @@ MYMETA.*
 Makefile
 blib/
 pm_to_blib
+Build.PL
+SockJS-*

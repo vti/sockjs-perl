@@ -1,0 +1,70 @@
+{
+   "abstract" : "SockJS Perl implementation",
+   "author" : [
+      "Viacheslav Tykhanovskyi, C<vti@cpan.org>."
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v3.0.13, CPAN::Meta::Converter version 2.150010",
+   "license" : [
+      "unknown"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "SockJS",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author",
+         "builder"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "Module::Build::Tiny" : "0.035"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::PAUSE::Permissions" : "0.04",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.7"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "AnyEvent" : "0",
+            "JSON" : "0",
+            "Plack" : "0",
+            "Protocol::WebSocket" : "0"
+         }
+      }
+   },
+   "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/vti/sockjs-perl/issues"
+      },
+      "homepage" : "https://github.com/vti/sockjs-perl",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/vti/sockjs-perl.git",
+         "web" : "https://github.com/vti/sockjs-perl"
+      }
+   },
+   "version" : "0.03",
+   "x_contributors" : [
+      "BlueT - Matthew Lien - 練喆明 <BlueT@BlueT.org>",
+      "vti <viacheslav.t@gmail.com>"
+   ],
+   "x_serialization_backend" : "JSON::PP version 2.27400_02"
+}
