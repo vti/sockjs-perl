@@ -3,6 +3,8 @@ package SockJS::Transport::Base;
 use strict;
 use warnings;
 
+use List::Util qw(any);
+
 sub new {
     my $class = shift;
     my (%params) = @_;
@@ -26,7 +28,7 @@ sub dispatch {
     $env->{'sockjs.allowed_methods'} = $self->{allowed_methods};
 
     my $method = $env->{REQUEST_METHOD};
-    if ( !grep { $_ eq $method } @{ $self->{allowed_methods} } ) {
+    if ( !any { $_ eq $method } @{ $self->{allowed_methods} } ) {
         return [ 405, [ 'Allow' => join ', ', @{ $self->{allowed_methods} } ],
             [''] ];
     }
