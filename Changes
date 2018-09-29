@@ -2,6 +2,10 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.07 2018-09-29T11:16:16Z
+
+ - pass $env to handler callback
+
 0.06 2018-08-26T18:25:58Z
 
  - use IO::String in tests for more compatibility with older perls
