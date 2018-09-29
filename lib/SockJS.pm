@@ -137,7 +137,7 @@ sub _dispatch_transport {
           ->($self, id => $id, connection => $conn, type => $transport->name);
 
         my $close_timer;
-        $conn->on(connect => sub { $self->{handler}->($session); });
+        $conn->on(connect => sub { $self->{handler}->($session, $env); });
         $conn->on(data => sub { shift; $session->fire_event(data => @_) });
         $conn->on(
             close => sub {
