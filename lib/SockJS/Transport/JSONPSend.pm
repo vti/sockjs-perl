@@ -24,8 +24,10 @@ sub dispatch_POST {
     my $data = $self->_get_content($env);
     return $data if $data && ref $data eq 'ARRAY';
 
+    my $json = JSON->new->utf8->allow_nonref(0);
+
     my $message;
-    eval { $message = JSON::decode_json($data) } || do {
+    eval { $message = $json->decode($data) } || do {
         return $self->_return_error('Broken JSON encoding.');
     };
 

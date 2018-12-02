@@ -26,8 +26,10 @@ sub dispatch_POST {
 
     return $self->_return_error('Payload expected.') unless length $data;
 
+    my $json = JSON->new->utf8->allow_nonref(0);
+
     my $message;
-    eval { $message = JSON::decode_json($data) } || do {
+    eval { $message = $json->decode($data) } || do {
         return $self->_return_error('Broken JSON encoding.');
     };
 

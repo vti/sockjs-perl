@@ -149,7 +149,9 @@ sub _parse {
         }
 
         if ($self->name eq 'websocket') {
-            eval { $message = JSON::decode_json($message) } || do {
+            my $json = JSON->new->utf8->allow_nonref(0);
+
+            eval { $message = $json->decode($message) } || do {
                 #warn "JSON error: $@\n";
                 return;
             };
