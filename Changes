@@ -2,6 +2,10 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.09 2018-12-02T11:11:02Z
+
+ - bump versions of HTTP::Tiny and List::Util
+
 0.08 2018-12-02T09:25:09Z
 
  - add missing IO::Compress::Deflate dependency (manwar)
