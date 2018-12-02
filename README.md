@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/vti/sockjs-perl.svg?branch=master)](https://travis-ci.org/vti/sockjs-perl) [![MetaCPAN Release](https://badge.fury.io/pl/SockJS.svg)](https://metacpan.org/release/SockJS) [![Kritika Status](https://kritika.io/users/vti/repos/vti+sockjs-perl/heads/master/status.svg)](https://kritika.io/users/vti/repos/vti+sockjs-perl) [![Kritika Status](https://kritika.io/users/vti/repos/vti+sockjs-perl/heads/master/status.svg?type=coverage)](https://kritika.io/users/vti/repos/vti+sockjs-perl) [![Kritika Status](https://kritika.io/users/vti/repos/vti+sockjs-perl/heads/master/status.svg?type=deps)](https://kritika.io/users/vti/repos/vti+sockjs-perl)
 # NAME
 
 SockJS - SockJS Perl implementation
@@ -43,6 +44,10 @@ See `example/` directory.
     http://github.com/vti/sockjs-perl
 
 # CREDITS
+
+Matthew Lien (github/BlueT)
+
+Mohammad S Anwar (github/manwar)
 
 # AUTHOR
 

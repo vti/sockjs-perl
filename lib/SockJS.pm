@@ -3,7 +3,7 @@ package SockJS;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use overload '&{}' => sub { shift->to_app(@_) }, fallback => 1;
 
@@ -316,6 +316,10 @@ See C<example/> directory.
     http://github.com/vti/sockjs-perl
 
 =head1 CREDITS
+
+Matthew Lien (github/BlueT)
+
+Mohammad S Anwar (github/manwar)
 
 =head1 AUTHOR
 
