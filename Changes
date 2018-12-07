@@ -2,6 +2,10 @@ Revision history for perl module SockJS
 
 {{$NEXT}}
 
+0.10 2018-12-07T12:01:32Z
+
+ - fix issue with not fully closed sockets on websocket aborts
+
 0.09 2018-12-02T11:11:02Z
 
  - bump versions of HTTP::Tiny and List::Util

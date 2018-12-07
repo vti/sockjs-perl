@@ -3,7 +3,7 @@ package SockJS;
 use strict;
 use warnings;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 use overload '&{}' => sub { shift->to_app(@_) }, fallback => 1;
 
