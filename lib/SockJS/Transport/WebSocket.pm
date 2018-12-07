@@ -41,10 +41,17 @@ sub dispatch_GET {
             $conn->aborted;
 
             if ($handle) {
-                $handle->push_shutdown;
-                $handle->destroy;
-                delete $self->{handle};
+                eval {
+                    $handle->push_shutdown;
+                    $handle->destroy;
+                };
                 undef $handle;
+            }
+
+            delete $self->{handle};
+
+            if ($fh) {
+                close $fh;
             }
         };
         $handle->on_eof($on_close_cb);
@@ -116,9 +123,10 @@ sub _parse {
                     if ($handle) {
                         $handle->push_shutdown;
                         $handle->destroy;
-                        delete $self->{handle};
                         undef $handle;
                     }
+
+                    delete $self->{handle};
                 }
             );
 
